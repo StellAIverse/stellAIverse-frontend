@@ -4,6 +4,9 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import ConnectWallet from './ConnectWallet';
+import WalletAddress from './WalletAddress';
+import NetworkSwitcher from './NetworkSwitcher';
 
 export const Navigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,7 +28,7 @@ export const Navigation: React.FC = () => {
           </Link>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex gap-8">
+          <div className="hidden md:flex gap-8 items-center">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -35,6 +38,13 @@ export const Navigation: React.FC = () => {
                 {link.label}
               </Link>
             ))}
+          </div>
+
+          {/* Wallet Controls */}
+          <div className="hidden md:flex gap-3 items-center">
+            <NetworkSwitcher />
+            <ConnectWallet />
+            <WalletAddress />
           </div>
 
           {/* Mobile Menu Button */}
@@ -59,6 +69,12 @@ export const Navigation: React.FC = () => {
                 {link.label}
               </Link>
             ))}
+            <div className="pt-4 border-t border-cosmic-purple/20 space-y-2">
+              <div className="flex gap-2">
+                <NetworkSwitcher className="flex-1" />
+              </div>
+              <ConnectWallet className="w-full" />
+            </div>
           </div>
         )}
       </div>
@@ -67,3 +83,4 @@ export const Navigation: React.FC = () => {
 };
 
 export default Navigation;
+
