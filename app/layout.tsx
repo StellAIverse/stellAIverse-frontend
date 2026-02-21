@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { StellarWalletProvider } from '@/components/context/StellarWalletProvider';
-import { appWithTranslation } from 'next-i18next';
 
 export const metadata: Metadata = {
   title: 'stellAIverse - AI Agent Marketplace',
@@ -46,5 +45,5 @@ function RootLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default appWithTranslation(RootLayout);
+export default RootLayout;
 

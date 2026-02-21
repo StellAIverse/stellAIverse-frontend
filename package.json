@@ -17,7 +17,7 @@
     "@stellar/stellar-sdk": "^14.0.0",
     "axios": "^1.6.0",
     "clsx": "^2.0.0",
-    "i18next": "^23.x",
+    "i18next": "^25.8.13",
     "next": "^16.1.6",
     "next-i18next": "^15.4.3",
     "react": "^18.2.0",
