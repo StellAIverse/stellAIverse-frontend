@@ -1,0 +1,1 @@
+Set up the initial configuration for internationalization, including supported languages, RTL handling, and a language provider component.

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { StellarWalletProvider } from '@/components/context/StellarWalletProvider';
+import { appWithTranslation } from 'next-i18next';
 
 export const metadata: Metadata = {
   title: 'stellAIverse - AI Agent Marketplace',
@@ -13,11 +14,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="bg-cosmic-dark text-white overflow-x-hidden">
@@ -48,4 +45,6 @@ export default function RootLayout({
     </html>
   );
 }
+
+export default appWithTranslation(RootLayout);
 
