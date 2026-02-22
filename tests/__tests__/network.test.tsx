@@ -149,9 +149,10 @@ describe('Network Error Handling', () => {
   });
 
   test('handles network switching errors gracefully', async () => {
-    jest.spyOn(stellarLib, 'getAccountBalances').mockRejectedValue(
-      new Error('Network error')
-    );
+    // Correctly mock getAccountBalances
+    jest.spyOn(stellarLib, 'getAccountBalances').mockImplementation(() => {
+      throw new Error('Network error');
+    });
 
     // This test verifies that the error handling doesn't crash the application
     render(

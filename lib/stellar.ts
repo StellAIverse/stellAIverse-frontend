@@ -14,9 +14,14 @@ export function getStellarServer(network: StellarNetwork) {
  * Validate a Stellar address format
  */
 export function isValidStellarAddress(address: string): boolean {
+  if (!address || address.length !== 56) return false;
+  const regex = /^G[A-Z0-9]{55}$/;
+  if (!regex.test(address)) return false;
+
   try {
-    return StellarSdk.StrKey.isValidEd25519PublicKey(address);
-  } catch {
+    StellarSdk.StrKey.decodeEd25519PublicKey(address);
+    return true;
+  } catch (e) {
     return false;
   }
 }

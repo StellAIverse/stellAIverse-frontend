@@ -14,6 +14,7 @@ export const Navigation: React.FC = () => {
   const navLinks = [
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/create', label: 'Create Agent' },
+    { href: '/analytics', label: 'Analytics' },
     { href: '/portfolio', label: 'Portfolio' },
     { href: '/learn', label: 'Learn' },
   ];
