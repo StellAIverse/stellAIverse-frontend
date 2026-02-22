@@ -25,7 +25,7 @@ export default function WalletAddress({ showBalance = true, className = '' }: Wa
     return null;
   }
 
-  const xlmBalance = wallet.balances.find((b) => b.asset === 'XLM')?.balance || '0';
+  const xlmBalance = wallet.balances?.find((b) => b.asset === 'XLM')?.balance || '0';
   const truncatedAddress = truncateStellarAddress(wallet.publicKey);
 
   const handleCopyAddress = async () => {
@@ -77,15 +77,15 @@ export default function WalletAddress({ showBalance = true, className = '' }: Wa
           <div className="p-3 border-b border-cyan-500/20">
             <div className="text-xs text-cyan-400 mb-2">Balances</div>
             <div className="space-y-1">
-              {wallet.balances.slice(0, 5).map((balance) => (
+              {wallet.balances?.slice(0, 5).map((balance) => (
                 <div key={`${balance.asset}-${balance.assetIssuer}`} className="flex justify-between text-xs">
                   <span className="text-cyan-300">{balance.asset}</span>
                   <span className="text-cyan-200/70">{formatXlmAmount(balance.balance)}</span>
                 </div>
               ))}
-              {wallet.balances.length > 5 && (
+              {wallet.balances?.length > 5 && (
                 <div className="text-xs text-cyan-400/50">
-                  +{wallet.balances.length - 5} more assets
+                  +{wallet.balances?.length - 5} more assets
                 </div>
               )}
             </div>

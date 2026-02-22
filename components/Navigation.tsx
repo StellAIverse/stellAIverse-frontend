@@ -14,10 +14,11 @@ export const Navigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: '/marketplace', label: t('Marketplace') },
-    { href: '/create', label: t('Create Agent') },
-    { href: '/portfolio', label: t('Portfolio') },
-    { href: '/learn', label: t('Learn') },
+    { href: '/marketplace', label: 'Marketplace' },
+    { href: '/create', label: 'Create Agent' },
+    { href: '/analytics', label: 'Analytics' },
+    { href: '/portfolio', label: 'Portfolio' },
+    { href: '/learn', label: 'Learn' },
   ];
 
   const handleLanguageChange = (lang: string) => {
