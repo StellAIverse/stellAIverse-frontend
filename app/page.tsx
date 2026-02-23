@@ -1,67 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 
 export default function Home() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   return (
     <main>
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-cosmic-dark/80 border-b border-cosmic-purple/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">✨</span>
-              <span className="glow-text font-bold text-xl">stellAIverse</span>
-            </div>
-
-            {/* Desktop Menu */}
-            <div className="hidden md:flex gap-8">
-              <Link href="/marketplace" className="hover:text-cosmic-purple transition-smooth">
-                Marketplace
-              </Link>
-              <Link href="/create" className="hover:text-cosmic-purple transition-smooth">
-                Create Agent
-              </Link>
-              <Link href="/portfolio" className="hover:text-cosmic-purple transition-smooth">
-                Portfolio
-              </Link>
-              <Link href="/learn" className="hover:text-cosmic-purple transition-smooth">
-                Learn
-              </Link>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2"
-            >
-              ☰
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          {isMenuOpen && (
-            <div className="md:hidden pb-4 space-y-2">
-              <Link href="/marketplace" className="block py-2 hover:text-cosmic-purple">
-                Marketplace
-              </Link>
-              <Link href="/create" className="block py-2 hover:text-cosmic-purple">
-                Create Agent
-              </Link>
-              <Link href="/portfolio" className="block py-2 hover:text-cosmic-purple">
-                Portfolio
-              </Link>
-              <Link href="/learn" className="block py-2 hover:text-cosmic-purple">
-                Learn
-              </Link>
-            </div>
-          )}
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 text-center">
         <div className="max-w-4xl mx-auto space-y-8">

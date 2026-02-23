@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { StellarWalletProvider } from '@/components/context/StellarWalletProvider';
+import QueryProvider from '@/components/providers/QueryProvider';
+import Navigation from '@/components/Navigation';
 
 export const metadata: Metadata = {
   title: 'stellAIverse - AI Agent Marketplace',
@@ -13,39 +15,39 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="bg-cosmic-dark text-white overflow-x-hidden">
-        <StellarWalletProvider>
-          <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
-            {/* Animated background stars */}
-            <div className="fixed inset-0 pointer-events-none">
-              {Array.from({ length: 100 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-                  style={{
-                    top: `${Math.random() * 100}%`,
-                    left: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 3}s`,
-                  }}
-                />
-              ))}
-            </div>
+        <QueryProvider>
+          <StellarWalletProvider>
+            <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
+              {/* Animated background stars */}
+              <div className="fixed inset-0 pointer-events-none">
+                {Array.from({ length: 100 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
+                    style={{
+                      top: `${Math.random() * 100}%`,
+                      left: `${Math.random() * 100}%`,
+                      animationDelay: `${Math.random() * 3}s`,
+                    }}
+                  />
+                ))}
+              </div>
 
-            {/* Main content */}
-            <div className="relative z-10">
-              {children}
+              <div className="relative z-10">
+                <Navigation />
+                {children}
+              </div>
             </div>
-          </div>
-        </StellarWalletProvider>
+          </StellarWalletProvider>
+        </QueryProvider>
       </body>
     </html>
   );
 }
+
+export default RootLayout;
 

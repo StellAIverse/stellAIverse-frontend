@@ -7,16 +7,24 @@ import { useState } from 'react';
 import ConnectWallet from './ConnectWallet';
 import WalletAddress from './WalletAddress';
 import NetworkSwitcher from './NetworkSwitcher';
+import { useTranslation } from 'next-i18next';
 
 export const Navigation: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/create', label: 'Create Agent' },
+    { href: '/analytics', label: 'Analytics' },
     { href: '/portfolio', label: 'Portfolio' },
     { href: '/learn', label: 'Learn' },
   ];
+
+  const handleLanguageChange = (lang: string) => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem('language', lang);
+  };
 
   return (
     <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-cosmic-dark/80 border-b border-cosmic-purple/20">

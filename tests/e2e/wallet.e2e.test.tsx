@@ -12,6 +12,7 @@ import { StellarWalletProvider, useStellarWallet } from '@/components/context/St
 import ConnectWallet from '@/components/ConnectWallet';
 import WalletAddress from '@/components/WalletAddress';
 import NetworkSwitcher from '@/components/NetworkSwitcher';
+import '@testing-library/jest-dom';
 
 // Mock wallet data
 const MOCK_WALLET_ADDRESS = 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5V6ST';
@@ -25,6 +26,26 @@ jest.mock('@stellar/freighter-api', () => ({
   getPublicKey: jest.fn(async () => MOCK_WALLET_ADDRESS),
   isConnected: jest.fn(async () => true),
   signTransaction: jest.fn(async (xdr) => `signed_${xdr}`),
+}));
+
+// Mock connectFreighter to simulate successful wallet connection
+jest.mock('@/lib/stellar', () => ({
+  ...jest.requireActual('@/lib/stellar'),
+  connectFreighter: jest.fn(async () => ({
+    publicKey: MOCK_WALLET_ADDRESS,
+    isConnected: true,
+  })),
+}));
+
+// Mock disconnect functionality
+jest.mock('@/components/context/StellarWalletProvider', () => ({
+  ...jest.requireActual('@/components/context/StellarWalletProvider'),
+  useStellarWallet: jest.fn(() => ({
+    wallet: { publicKey: MOCK_WALLET_ADDRESS, isConnected: true },
+    disconnect: jest.fn(() => {
+      localStorage.clear();
+    }),
+  })),
 }));
 
 // Complete wallet flow test component
@@ -89,7 +110,7 @@ describe('E2E: Wallet Connection Flow', () => {
     await user.click(freighterBtn);
 
     // Wait for wallet to be connected
-    await waitFor(() => {
+    await waitFor(async () => {
       expect(screen.getByTestId('authenticated-content')).toBeInTheDocument();
     });
 
@@ -112,7 +133,7 @@ describe('E2E: Wallet Connection Flow', () => {
     const freighterBtn = screen.getByText('Freighter');
     await user.click(freighterBtn);
 
-    await waitFor(() => {
+    await waitFor(async () => {
       expect(screen.getByTestId('authenticated-content')).toBeInTheDocument();
     });
 
@@ -320,7 +341,7 @@ describe('E2E: Wallet Address Display', () => {
       </StellarWalletProvider>
     );
 
-    await waitFor(() => {
+    await waitFor(async () => {
       const truncatedAddress = screen.getByText(/GAAA.*V6ST/);
       expect(truncatedAddress).toBeInTheDocument();
 
@@ -337,10 +358,11 @@ describe('E2E: Copy to Clipboard', () => {
     const user = userEvent.setup();
 
     // Mock clipboard API
-    Object.assign(navigator, {
-      clipboard: {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
         writeText: jest.fn(async () => {}),
       },
+      writable: true,
     });
 
     localStorage.setItem('stellar_wallet_address', MOCK_WALLET_ADDRESS);
