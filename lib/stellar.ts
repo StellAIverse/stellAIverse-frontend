@@ -1,12 +1,20 @@
-import * as StellarSdk from '@stellar/stellar-sdk';
-import { StellarNetwork, WalletBalance, TransactionResult } from './types';
-import { STELLAR_NETWORKS, XLM_ASSET } from './stellar-constants';
+import * as StellarSdk from "@stellar/stellar-sdk";
+import { isConnected, getAddress } from "@stellar/freighter-api";
+import { StellarNetwork, WalletBalance, TransactionResult } from "./types";
+import {
+  STELLAR_NETWORKS,
+  XLM_ASSET,
+  DEFAULT_NETWORK,
+} from "./stellar-constants";
 
 /**
  * Get the Stellar server instance for a given network
  */
 export function getStellarServer(network: StellarNetwork) {
-  const networkConfig = STELLAR_NETWORKS[network];
+  const networkConfig =
+    STELLAR_NETWORKS[network] ||
+    STELLAR_NETWORKS[DEFAULT_NETWORK] ||
+    Object.values(STELLAR_NETWORKS)[0];
   return new StellarSdk.Horizon.Server(networkConfig.horizonUrl);
 }
 
@@ -37,22 +45,25 @@ export function truncateStellarAddress(address: string, chars = 4): string {
 /**
  * Get account balances from Horizon API
  */
-export async function getAccountBalances(publicKey: string, network: StellarNetwork): Promise<WalletBalance[]> {
+export async function getAccountBalances(
+  publicKey: string,
+  network: StellarNetwork,
+): Promise<WalletBalance[]> {
   try {
     const server = getStellarServer(network);
     const account = await server.loadAccount(publicKey);
-    
+
     return account.balances.map((balance: any) => {
-      const isNative = balance.asset_type === 'native';
+      const isNative = balance.asset_type === "native";
       return {
-        asset: isNative ? 'XLM' : balance.asset_code,
+        asset: isNative ? "XLM" : balance.asset_code,
         balance: balance.balance,
         assetCode: balance.asset_code,
         assetIssuer: balance.asset_issuer,
       };
     });
   } catch (error) {
-    console.error('Error fetching account balances:', error);
+    console.error("Error fetching account balances:", error);
     throw error;
   }
 }
@@ -60,44 +71,48 @@ export async function getAccountBalances(publicKey: string, network: StellarNetw
 /**
  * Check if Freighter wallet is available
  */
-export function isFreighterAvailable(): boolean {
-  return typeof window !== 'undefined' && !!(window as any).freighter;
+export async function isFreighterAvailable(): Promise<boolean> {
+  const status = await isConnected();
+  return !!status.isConnected;
 }
 
 /**
  * Check if Albedo wallet is available
  */
 export function isAlbedoAvailable(): boolean {
-  return typeof window !== 'undefined' && !!(window as any).albedo;
+  return typeof window !== "undefined" && !!(window as any).albedo;
 }
 
 /**
  * Connect to Freighter wallet
  */
-export async function connectFreighter(network: StellarNetwork): Promise<string> {
+export async function connectFreighter(
+  network: StellarNetwork,
+): Promise<string> {
   try {
+    const status = await isConnected();
     // Check if freighter is available
-    if (!isFreighterAvailable()) {
-      throw new Error('Freighter wallet not found. Please install it first.');
+    if (!status.isConnected) {
+      throw new Error("Freighter wallet not found. Please install it first.");
     }
 
-    const freighter = (window as any).freighter;
-    
-    // Request access to wallet
-    const accessResponse = await freighter.requestAccess();
-    if (accessResponse.error) {
-      throw new Error(accessResponse.error.message || 'Failed to access Freighter');
+    const { address, error } = await getAddress();
+    if (error) {
+      throw new Error(
+        typeof error === "string"
+          ? error
+          : "Failed to get address from Freighter",
+      );
     }
 
-    const publicKey = accessResponse.address;
-    if (!isValidStellarAddress(publicKey)) {
-      throw new Error('Invalid address from Freighter');
+    if (!address || !isValidStellarAddress(address)) {
+      throw new Error("Invalid address from Freighter");
     }
 
-    return publicKey;
+    return address;
   } catch (error: any) {
-    if (error.message?.includes('User rejected')) {
-      throw new Error('User rejected the wallet connection');
+    if (error.message?.includes("User rejected")) {
+      throw new Error("User rejected the wallet connection");
     }
     throw error;
   }
@@ -109,19 +124,19 @@ export async function connectFreighter(network: StellarNetwork): Promise<string>
 export async function connectAlbedo(network: StellarNetwork): Promise<string> {
   try {
     if (!isAlbedoAvailable()) {
-      throw new Error('Albedo wallet not found. Please install it first.');
+      throw new Error("Albedo wallet not found. Please install it first.");
     }
 
     const response = await (window as any).albedo.publicKey();
-    
+
     if (!response.publicKey || !isValidStellarAddress(response.publicKey)) {
-      throw new Error('Invalid address from Albedo');
+      throw new Error("Invalid address from Albedo");
     }
-    
+
     return response.publicKey;
   } catch (error: any) {
-    if (error.message?.includes('User rejected')) {
-      throw new Error('User rejected the wallet connection');
+    if (error.message?.includes("User rejected")) {
+      throw new Error("User rejected the wallet connection");
     }
     throw error;
   }
@@ -134,7 +149,9 @@ export async function connectLedger(network: StellarNetwork): Promise<string> {
   try {
     // This is a placeholder. Full Ledger implementation would require @ledgerhq/hw-transport-u2f
     // and additional setup. For now, we throw an error indicating it's not fully implemented.
-    throw new Error('Ledger wallet integration coming soon. Please use Freighter or Albedo for now.');
+    throw new Error(
+      "Ledger wallet integration coming soon. Please use Freighter or Albedo for now.",
+    );
   } catch (error) {
     throw error;
   }
@@ -144,11 +161,11 @@ export async function connectLedger(network: StellarNetwork): Promise<string> {
  * Disconnect wallet and clear related data
  */
 export function disconnectWallet(): void {
-  if (typeof window === 'undefined') return;
-  
-  localStorage.removeItem('stellar_wallet_address');
-  localStorage.removeItem('stellar_wallet_type');
-  localStorage.removeItem('stellar_wallet_state');
+  if (typeof window === "undefined") return;
+
+  localStorage.removeItem("stellar_wallet_address");
+  localStorage.removeItem("stellar_wallet_type");
+  localStorage.removeItem("stellar_wallet_state");
 }
 
 /**
@@ -156,31 +173,31 @@ export function disconnectWallet(): void {
  */
 export async function signTransactionWithFreighter(
   transaction: StellarSdk.Transaction,
-  network: StellarNetwork
+  network: StellarNetwork,
 ): Promise<TransactionResult> {
   try {
     if (!isFreighterAvailable()) {
-      throw new Error('Freighter wallet not found');
+      throw new Error("Freighter wallet not found");
     }
 
     const freighter = (window as any).freighter;
-    const xdr = transaction.toEnvelope().toXDR('base64');
+    const xdr = transaction.toEnvelope().toXDR("base64");
     const response = await freighter.signTransaction(xdr, {
       networkPassphrase: getNetworkPassphrase(network),
     });
 
     if (response.error) {
-      throw new Error(response.error.message || 'Failed to sign transaction');
+      throw new Error(response.error.message || "Failed to sign transaction");
     }
-    
+
     return {
       success: true,
-      hash: '', // Hash would be returned after submission
+      hash: "", // Hash would be returned after submission
     };
   } catch (error: any) {
     return {
       success: false,
-      error: error.message || 'Failed to sign transaction',
+      error: error.message || "Failed to sign transaction",
     };
   }
 }
@@ -190,20 +207,20 @@ export async function signTransactionWithFreighter(
  */
 export async function signTransactionWithAlbedo(
   transaction: StellarSdk.Transaction,
-  network: StellarNetwork
+  network: StellarNetwork,
 ): Promise<TransactionResult> {
   try {
     if (!isAlbedoAvailable()) {
-      throw new Error('Albedo wallet not found');
+      throw new Error("Albedo wallet not found");
     }
 
-    const xdr = transaction.toEnvelope().toXDR('base64');
+    const xdr = transaction.toEnvelope().toXDR("base64");
     const response = await (window as any).albedo.tx({ xdr });
-    
+
     if (response.error) {
       throw new Error(response.error);
     }
-    
+
     return {
       success: true,
       hash: response.hash,
@@ -211,7 +228,7 @@ export async function signTransactionWithAlbedo(
   } catch (error: any) {
     return {
       success: false,
-      error: error.message || 'Failed to sign transaction',
+      error: error.message || "Failed to sign transaction",
     };
   }
 }
@@ -221,17 +238,17 @@ export async function signTransactionWithAlbedo(
  */
 export async function submitTransaction(
   signedTransactionXdr: string,
-  network: StellarNetwork
+  network: StellarNetwork,
 ): Promise<TransactionResult> {
   try {
     const server = getStellarServer(network);
     // Parse the signed transaction XDR
     const envelope = StellarSdk.TransactionBuilder.fromXDR(
       signedTransactionXdr,
-      getNetworkPassphrase(network)
+      getNetworkPassphrase(network),
     );
     const result = await server.submitTransaction(envelope);
-    
+
     return {
       success: true,
       hash: result.hash,
@@ -239,7 +256,7 @@ export async function submitTransaction(
   } catch (error: any) {
     return {
       success: false,
-      error: error.message || 'Failed to submit transaction',
+      error: error.message || "Failed to submit transaction",
     };
   }
 }
@@ -257,7 +274,8 @@ export function getNetworkPassphrase(network: StellarNetwork): string {
 export function formatXlmAmount(amount: string): string {
   try {
     const num = parseFloat(amount);
-    return num.toLocaleString('en-US', {
+    if (isNaN(num)) return amount;
+    return num.toLocaleString("en-US", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 7,
     });
