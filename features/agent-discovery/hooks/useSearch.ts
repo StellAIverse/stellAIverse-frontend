@@ -1,0 +1,29 @@
+import { useState, useEffect } from 'react';
+import { searchAgents } from '../services/searchService';
+
+export const useSearch = (initialQuery = '', initialFilters = {}) => {
+  const [query, setQuery] = useState(initialQuery);
+  const [filters, setFilters] = useState(initialFilters);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await searchAgents(query, filters);
+        setResults(data);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
+  }, [query, filters]);
+
+  return { query, setQuery, filters, setFilters, results, loading, error };
+};
