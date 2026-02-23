@@ -6,7 +6,7 @@ export const useSearch = (initialQuery = '', initialFilters = {}) => {
   const [filters, setFilters] = useState(initialFilters);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null); // Ensure error is a string or null
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -16,7 +16,7 @@ export const useSearch = (initialQuery = '', initialFilters = {}) => {
         const data = await searchAgents(query, filters);
         setResults(data);
       } catch (err) {
-        setError(err);
+        setError((err as Error).message || 'An unknown error occurred'); // Cast err to Error and extract message
       } finally {
         setLoading(false);
       }
