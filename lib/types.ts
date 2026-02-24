@@ -9,7 +9,7 @@ export interface Agent {
   users: number;
   behavior: string;
   capabilities: string[];
-  status: 'active' | 'inactive' | 'draft';
+  status: "active" | "inactive" | "draft";
   createdAt: string;
   updatedAt: string;
 }
@@ -32,19 +32,20 @@ export interface Tutorial {
   id: string;
   title: string;
   description: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: "beginner" | "intermediate" | "advanced";
   duration: number; // in minutes
   content: string;
   videoUrl?: string;
 }
 
 // Stellar Wallet Types
-export type StellarNetwork = 'mainnet' | 'testnet' | 'futurenet';
+export type StellarNetwork = "mainnet" | "testnet" | "futurenet";
 
 export interface StellarNetworkConfig {
   name: StellarNetwork;
   displayName: string;
   horizonUrl: string;
+  rpcUrl?: string;
   networkPassphrase: string;
   color: string;
   badge: string;
@@ -60,7 +61,7 @@ export interface WalletBalance {
 export interface StellarWallet {
   publicKey: string;
   name: string;
-  type: 'freighter' | 'albedo' | 'ledger';
+  type: "freighter" | "albedo" | "ledger";
   isConnected: boolean;
   balances: WalletBalance[];
   network: StellarNetwork;
@@ -71,7 +72,9 @@ export interface WalletContextType {
   network: StellarNetwork;
   isConnecting: boolean;
   error: string | null;
-  connectWallet: (walletType: 'freighter' | 'albedo' | 'ledger') => Promise<void>;
+  connectWallet: (
+    walletType: "freighter" | "albedo" | "ledger",
+  ) => Promise<void>;
   disconnectWallet: () => void;
   switchNetwork: (network: StellarNetwork) => Promise<void>;
   getBalance: () => Promise<WalletBalance[]>;
@@ -89,4 +92,3 @@ export interface StellarAsset {
   issuer: string;
   name?: string;
 }
-
