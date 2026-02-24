@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { searchAgents } from '../services/searchService';
+import { useState, useEffect } from "react";
+import { searchAgents } from "../services/searchService";
 
-export const useSearch = (initialQuery = '', initialFilters = {}) => {
+export const useSearch = (initialQuery = "", initialFilters = {}) => {
   const [query, setQuery] = useState(initialQuery);
   const [filters, setFilters] = useState(initialFilters);
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null); // Ensure error is a string or null
 
@@ -16,7 +16,7 @@ export const useSearch = (initialQuery = '', initialFilters = {}) => {
         const data = await searchAgents(query, filters);
         setResults(data);
       } catch (err) {
-        setError((err as Error).message || 'An unknown error occurred'); // Cast err to Error and extract message
+        setError((err as Error).message || "An unknown error occurred"); // Cast err to Error and extract message
       } finally {
         setLoading(false);
       }

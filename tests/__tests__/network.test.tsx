@@ -1,19 +1,28 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { StellarWalletProvider, useStellarWallet } from '@/components/context/StellarWalletProvider';
-import * as stellarLib from '@/lib/stellar';
-import { STELLAR_NETWORKS } from '@/lib/stellar-constants';
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import {
+  StellarWalletProvider,
+  useStellarWallet,
+} from "@/components/context/StellarWalletProvider";
+import * as stellarLib from "@/lib/stellar";
+import { STELLAR_NETWORKS } from "@/lib/stellar-constants";
 
 // Mock Stellar SDK
-jest.mock('@stellar/stellar-sdk', () => ({
+jest.mock("@stellar/stellar-sdk", () => ({
   Horizon: {
     Server: jest.fn(),
   },
   StrKey: {
-    isValidEd25519PublicKey: jest.fn((addr) => addr.startsWith('G')),
+    isValidEd25519PublicKey: jest.fn((addr) => addr.startsWith("G")),
   },
   TransactionEnvelope: {
     fromXDR: jest.fn(),
   },
+}));
+
+jest.mock("@/lib/stellar", () => ({
+  ...jest.requireActual("@/lib/stellar"),
+  getAccountBalances: jest.fn().mockResolvedValue([]),
 }));
 
 // Test component for network switching
@@ -24,19 +33,19 @@ function TestNetworkComponent() {
     <div>
       <p data-testid="current-network">{network}</p>
       <button
-        onClick={() => switchNetwork('mainnet')}
+        onClick={() => switchNetwork("mainnet")}
         data-testid="switch-mainnet"
       >
         Mainnet
       </button>
       <button
-        onClick={() => switchNetwork('testnet')}
+        onClick={() => switchNetwork("testnet")}
         data-testid="switch-testnet"
       >
         Testnet
       </button>
       <button
-        onClick={() => switchNetwork('futurenet')}
+        onClick={() => switchNetwork("futurenet")}
         data-testid="switch-futurenet"
       >
         Futurenet
@@ -46,71 +55,81 @@ function TestNetworkComponent() {
   );
 }
 
-describe('Network Switching Integration', () => {
+describe("Network Switching Integration", () => {
   beforeEach(() => {
     localStorage.clear();
     jest.clearAllMocks();
   });
 
-  test('displays current network', () => {
+  test("displays current network", () => {
     render(
       <StellarWalletProvider>
         <TestNetworkComponent />
-      </StellarWalletProvider>
+      </StellarWalletProvider>,
     );
 
-    const currentNetwork = screen.getByTestId('current-network');
-    expect(['mainnet', 'testnet', 'futurenet']).toContain(currentNetwork.textContent);
+    const currentNetwork = screen.getByTestId("current-network");
+    expect(["mainnet", "testnet", "futurenet"]).toContain(
+      currentNetwork.textContent,
+    );
   });
 
-  test('switches between networks', async () => {
+  test("switches between networks", async () => {
     render(
       <StellarWalletProvider>
         <TestNetworkComponent />
-      </StellarWalletProvider>
+      </StellarWalletProvider>,
     );
 
-    const switchTestnetBtn = screen.getByTestId('switch-testnet');
-    fireEvent.click(switchTestnetBtn);
+    const user = userEvent.setup();
+    const switchTestnetBtn = screen.getByTestId("switch-testnet");
+    await user.click(switchTestnetBtn);
 
     await waitFor(() => {
-      expect(screen.getByTestId('current-network')).toHaveTextContent('testnet');
+      expect(screen.getByTestId("current-network")).toHaveTextContent(
+        "testnet",
+      );
     });
 
-    const switchMainnetBtn = screen.getByTestId('switch-mainnet');
-    fireEvent.click(switchMainnetBtn);
+    const switchMainnetBtn = screen.getByTestId("switch-mainnet");
+    await user.click(switchMainnetBtn);
 
     await waitFor(() => {
-      expect(screen.getByTestId('current-network')).toHaveTextContent('mainnet');
+      expect(screen.getByTestId("current-network")).toHaveTextContent(
+        "mainnet",
+      );
     });
   });
 
-  test('persists network selection across rerenders', async () => {
+  test("persists network selection across rerenders", async () => {
     const { rerender } = render(
       <StellarWalletProvider>
         <TestNetworkComponent />
-      </StellarWalletProvider>
+      </StellarWalletProvider>,
     );
 
-    const switchTestnetBtn = screen.getByTestId('switch-testnet');
-    fireEvent.click(switchTestnetBtn);
+    const user = userEvent.setup();
+    const switchTestnetBtn = screen.getByTestId("switch-testnet");
+    await user.click(switchTestnetBtn);
 
     await waitFor(() => {
-      expect(localStorage.getItem('stellar_network')).toBe('testnet');
+      expect(localStorage.getItem("stellar_network")).toBe("testnet");
     });
 
     rerender(
       <StellarWalletProvider>
         <TestNetworkComponent />
-      </StellarWalletProvider>
+      </StellarWalletProvider>,
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('current-network')).toHaveTextContent('testnet');
+      expect(screen.getByTestId("current-network")).toHaveTextContent(
+        "testnet",
+      );
     });
   });
 
-  test('all three networks have correct configuration', () => {
+  test("all three networks have correct configuration", () => {
     Object.entries(STELLAR_NETWORKS).forEach(([key, config]) => {
       expect(config.name).toBe(key);
       expect(config.displayName).toBeDefined();
@@ -121,69 +140,74 @@ describe('Network Switching Integration', () => {
     });
   });
 
-  test('mainnet configuration is correct', () => {
+  test("mainnet configuration is correct", () => {
     const mainnetConfig = STELLAR_NETWORKS.mainnet;
-    expect(mainnetConfig.displayName).toBe('Mainnet');
-    expect(mainnetConfig.horizonUrl).toContain('horizon.stellar.org');
-    expect(mainnetConfig.networkPassphrase).toContain('Public Global Stellar Network');
+    expect(mainnetConfig.displayName).toBe("Mainnet");
+    expect(mainnetConfig.horizonUrl).toContain("horizon.stellar.org");
+    expect(mainnetConfig.networkPassphrase).toContain(
+      "Public Global Stellar Network",
+    );
   });
 
-  test('testnet configuration is correct', () => {
+  test("testnet configuration is correct", () => {
     const testnetConfig = STELLAR_NETWORKS.testnet;
-    expect(testnetConfig.displayName).toBe('Testnet');
-    expect(testnetConfig.horizonUrl).toContain('testnet');
-    expect(testnetConfig.networkPassphrase).toContain('Test SDF Network');
+    expect(testnetConfig.displayName).toBe("Testnet");
+    expect(testnetConfig.horizonUrl).toContain("testnet");
+    expect(testnetConfig.networkPassphrase).toContain("Test SDF Network");
   });
 
-  test('futurenet configuration is correct', () => {
+  test("futurenet configuration is correct", () => {
     const futurenetConfig = STELLAR_NETWORKS.futurenet;
-    expect(futurenetConfig.displayName).toBe('Futurenet');
-    expect(futurenetConfig.horizonUrl).toContain('futurenet');
-    expect(futurenetConfig.networkPassphrase).toContain('Future Network');
+    expect(futurenetConfig.displayName).toBe("Futurenet");
+    expect(futurenetConfig.horizonUrl).toContain("futurenet");
+    expect(futurenetConfig.networkPassphrase).toContain("Future Network");
   });
 });
 
-describe('Network Error Handling', () => {
+describe("Network Error Handling", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('handles network switching errors gracefully', async () => {
+  test("handles network switching errors gracefully", async () => {
     // Correctly mock getAccountBalances
-    jest.spyOn(stellarLib, 'getAccountBalances').mockImplementation(() => {
-      throw new Error('Network error');
+    (stellarLib.getAccountBalances as jest.Mock).mockImplementation(() => {
+      throw new Error("Network error");
     });
 
     // This test verifies that the error handling doesn't crash the application
     render(
       <StellarWalletProvider>
         <TestNetworkComponent />
-      </StellarWalletProvider>
+      </StellarWalletProvider>,
     );
 
-    expect(screen.getByTestId('current-network')).toBeInTheDocument();
+    expect(screen.getByTestId("current-network")).toBeInTheDocument();
   });
 });
 
-describe('Horizon API Endpoints', () => {
-  test('mainnet uses correct Horizon endpoint', () => {
+describe("Horizon API Endpoints", () => {
+  test("mainnet uses correct Horizon endpoint", () => {
     const mainnetConfig = STELLAR_NETWORKS.mainnet;
     expect(mainnetConfig.horizonUrl).toBe(
-      process.env.NEXT_PUBLIC_STELLAR_MAINNET_URL || 'https://horizon.stellar.org'
+      process.env.NEXT_PUBLIC_STELLAR_MAINNET_URL ||
+        "https://horizon.stellar.org",
     );
   });
 
-  test('testnet uses correct Horizon endpoint', () => {
+  test("testnet uses correct Horizon endpoint", () => {
     const testnetConfig = STELLAR_NETWORKS.testnet;
     expect(testnetConfig.horizonUrl).toBe(
-      process.env.NEXT_PUBLIC_STELLAR_TESTNET_URL || 'https://horizon-testnet.stellar.org'
+      process.env.NEXT_PUBLIC_STELLAR_TESTNET_URL ||
+        "https://horizon-testnet.stellar.org",
     );
   });
 
-  test('futurenet uses correct Horizon endpoint', () => {
+  test("futurenet uses correct Horizon endpoint", () => {
     const futurenetConfig = STELLAR_NETWORKS.futurenet;
     expect(futurenetConfig.horizonUrl).toBe(
-      process.env.NEXT_PUBLIC_STELLAR_FUTURENET_URL || 'https://horizon-futurenet.stellar.org'
+      process.env.NEXT_PUBLIC_STELLAR_FUTURENET_URL ||
+        "https://horizon-futurenet.stellar.org",
     );
   });
 });
