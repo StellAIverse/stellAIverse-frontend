@@ -1,3 +1,44 @@
+/**
+ * Build a Soroban contract deployment and mint transaction for agent minting
+ */
+import { Contract } from '@stellar/stellar-sdk';
+import { AgentMetadata } from './ipfs';
+
+export async function buildAgentMintTx({
+  network,
+  creatorPublicKey,
+  ipfsCid,
+  royaltyPercent,
+}: {
+  network: StellarNetwork;
+  creatorPublicKey: string;
+  ipfsCid: string;
+  royaltyPercent: number;
+}): Promise<StellarSdk.Transaction> {
+  // This assumes a Soroban token contract with mint and metadata methods
+  // You may need to adjust contract method names/params for your deployment
+  const sourceAccount = new StellarSdk.Account(creatorPublicKey, '0');
+  const builder = new StellarSdk.TransactionBuilder(sourceAccount, {
+    fee: '1000',
+    networkPassphrase: getNetworkPassphrase(network),
+  });
+
+  // Example: deploy contract (if needed) and mint token with metadata
+  // Replace with actual Soroban deployment logic as needed
+  // const deployOp = ...
+  // builder.addOperation(deployOp);
+
+  // Attach metadata (IPFS CID, royalty)
+  const contract = new (StellarSdk as any).Contract(''); // Contract ID set after deployment
+  const mintOp = contract.call(
+    'mint_agent',
+    StellarSdk.nativeToScVal(ipfsCid, { type: 'string' }),
+    StellarSdk.nativeToScVal(royaltyPercent, { type: 'u32' })
+  );
+  builder.addOperation(mintOp as any);
+
+  return builder.setTimeout(0).build();
+}
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { isConnected, getAddress } from "@stellar/freighter-api";
 import { StellarNetwork, WalletBalance, TransactionResult } from "./types";
