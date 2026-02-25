@@ -87,6 +87,41 @@ export interface TransactionResult {
   error?: string;
 }
 
+// Soroban Types
+export interface SorobanContractSpec {
+  id: string;
+  name: string;
+  fns: SorobanFunctionSpec[];
+}
+
+export interface SorobanFunctionSpec {
+  name: string;
+  args: { name: string; type: string }[];
+  result: string;
+}
+
+export interface ResourceMetrics {
+  cpuInstructions: number;
+  ramBytes: number;
+  ledgerReadBytes: number;
+  ledgerWriteBytes: number;
+  readCount: number;
+  writeCount: number;
+  costXlm: string;
+}
+
+export interface SorobanTransactionResult extends TransactionResult {
+  metrics?: ResourceMetrics;
+  events?: SorobanEvent[];
+}
+
+export interface SorobanEvent {
+  type: string;
+  contractId: string;
+  topics: any[];
+  value: any;
+}
+
 export interface StellarAsset {
   code: string;
   issuer: string;
