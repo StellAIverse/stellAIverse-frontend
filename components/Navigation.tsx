@@ -1,36 +1,40 @@
 /* Navigation Component */
 
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
-import ConnectWallet from './ConnectWallet';
-import WalletAddress from './WalletAddress';
-import NetworkSwitcher from './NetworkSwitcher';
-import { useTranslation } from 'next-i18next';
+import Link from "next/link";
+import { useState } from "react";
+import ConnectWallet from "./ConnectWallet";
+import WalletAddress from "./WalletAddress";
+import NetworkSwitcher from "./NetworkSwitcher";
+import { useTranslation } from "next-i18next";
 
 export const Navigation: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: '/marketplace', label: 'Marketplace' },
-    { href: '/create', label: 'Create Agent' },
-    { href: '/analytics', label: 'Analytics' },
-    { href: '/portfolio', label: 'Portfolio' },
-    { href: '/learn', label: 'Learn' },
+    { href: "/marketplace", label: "Marketplace" },
+    { href: "/create", label: "Create Agent" },
+    { href: "/analytics", label: "Analytics" },
+    { href: "/security", label: "Security" },
+    { href: "/portfolio", label: "Portfolio" },
+    { href: "/learn", label: "Learn" },
   ];
 
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
-    localStorage.setItem('language', lang);
+    localStorage.setItem("language", lang);
   };
 
   return (
     <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-cosmic-dark/80 border-b border-cosmic-purple/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-smooth">
+          <Link
+            href="/"
+            className="flex items-center gap-2 hover:opacity-80 transition-smooth"
+          >
             <span className="text-2xl">✨</span>
             <span className="glow-text font-bold text-xl">stellAIverse</span>
           </Link>
@@ -91,4 +95,3 @@ export const Navigation: React.FC = () => {
 };
 
 export default Navigation;
-
