@@ -64,6 +64,9 @@ export const STORAGE_KEYS = {
   WALLET_TYPE: "stellar_wallet_type",
   NETWORK: "stellar_network",
   WALLET_STATE: "stellar_wallet_state",
+  LINKED_WALLETS: "stellar_linked_wallets",
+  DELEGATIONS: "stellar_delegations",
+  SESSION_RECOVERY: "stellar_session_recovery",
 } as const;
 
 // XLM Asset

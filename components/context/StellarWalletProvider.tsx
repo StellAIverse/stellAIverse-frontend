@@ -16,6 +16,8 @@ import {
   isValidStellarAddress,
 } from '@/lib/stellar';
 import { STORAGE_KEYS, DEFAULT_NETWORK, STELLAR_NETWORKS, ERROR_MESSAGES } from '@/lib/stellar-constants';
+import { LinkedWallet, Delegation } from '@/lib/wallet/types';
+import { walletService } from '@/lib/wallet/service';
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
@@ -24,6 +26,8 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   const [network, setNetwork] = useState<StellarNetwork>(DEFAULT_NETWORK);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkedWallets, setLinkedWallets] = useState<LinkedWallet[]>([]);
+  const [delegations, setDelegations] = useState<Delegation[]>([]);
 
   // Load wallet state from localStorage on mount
   useEffect(() => {
@@ -45,6 +49,10 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         network: savedNetwork || DEFAULT_NETWORK,
       });
     }
+
+    // Load multi-wallet & delegation state
+    setLinkedWallets(walletService.getLinkedWallets());
+    setDelegations(walletService.getDelegations());
   }, []);
 
   // Persist network to localStorage
@@ -113,6 +121,80 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
     setError(null);
   }, []);
 
+  const linkWallet = useCallback(async (walletType: 'freighter' | 'albedo' | 'ledger') => {
+    setIsConnecting(true);
+    try {
+      let publicKey: string;
+      switch (walletType) {
+        case 'freighter': publicKey = await connectFreighter(network); break;
+        case 'albedo': publicKey = await connectAlbedo(network); break;
+        case 'ledger': publicKey = await connectLedger(network); break;
+        default: throw new Error('Unknown wallet type');
+      }
+
+      if (linkedWallets.some((w: LinkedWallet) => w.publicKey === publicKey)) {
+        throw new Error('Wallet already linked');
+      }
+
+      const newLinkedWallet: LinkedWallet = {
+        publicKey,
+        name: walletType.charAt(0).toUpperCase() + walletType.slice(1),
+        type: walletType,
+        network,
+        isLinked: true,
+        linkedAt: new Date().toISOString(),
+      };
+
+      const updated = [...linkedWallets, newLinkedWallet];
+      setLinkedWallets(updated);
+      walletService.saveLinkedWallets(updated);
+    } catch (err: any) {
+      setError(err.message || 'Failed to link wallet');
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [network, linkedWallets]);
+
+  const unlinkWallet = useCallback((publicKey: string) => {
+    const updated = linkedWallets.filter((w: LinkedWallet) => w.publicKey !== publicKey);
+    setLinkedWallets(updated);
+    walletService.saveLinkedWallets(updated);
+    if (wallet?.publicKey === publicKey) {
+      disconnectWallet();
+    }
+  }, [linkedWallets, wallet, disconnectWallet]);
+
+  const manageDelegation = useCallback(async (delegation: Omit<Delegation, 'id' | 'createdAt'>) => {
+    const newDelegation: Delegation = {
+      ...delegation,
+      id: Math.random().toString(36).substring(2, 9),
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...delegations, newDelegation];
+    setDelegations(updated);
+    walletService.saveDelegations(updated);
+    walletService.addAuditLog({
+      delegationId: newDelegation.id,
+      action: 'grant',
+      actor: wallet?.publicKey || 'unknown',
+      details: { grantee: delegation.grantee, permissions: delegation.permissions }
+    });
+  }, [delegations, wallet]);
+
+  const recoverSession = useCallback(async () => {
+    const state = walletService.recoverSession();
+    if (state && state.linkedWallets.length > 0) {
+      setLinkedWallets(state.linkedWallets);
+      // Automatically connect the first linked wallet if none connected
+      if (!wallet) {
+        const first = state.linkedWallets[0];
+        await connectWallet(first.type);
+      }
+    } else {
+      throw new Error('No session to recover');
+    }
+  }, [wallet, connectWallet]);
+
   const switchNetwork = useCallback(async (newNetwork: StellarNetwork) => {
     setNetwork(newNetwork);
     setError(null);
@@ -121,7 +203,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
     if (wallet?.publicKey) {
       try {
         const balances = await getAccountBalances(wallet.publicKey, newNetwork);
-        setWallet((prev) =>
+        setWallet((prev: StellarWallet | null) =>
           prev
             ? {
                 ...prev,
@@ -147,7 +229,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
 
     try {
       const balances = await getAccountBalances(wallet.publicKey, network);
-      setWallet((prev) =>
+      setWallet((prev: StellarWallet | null) =>
         prev
           ? {
               ...prev,
@@ -176,6 +258,12 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
     switchNetwork,
     getBalance,
     clearError,
+    linkedWallets,
+    delegations,
+    linkWallet,
+    unlinkWallet,
+    manageDelegation,
+    recoverSession,
   };
 
   return (

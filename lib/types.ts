@@ -1,4 +1,5 @@
 /* Type definitions for the application */
+import { LinkedWallet, Delegation } from "./wallet/types";
 
 export interface Agent {
   id: string;
@@ -79,6 +80,13 @@ export interface WalletContextType {
   switchNetwork: (network: StellarNetwork) => Promise<void>;
   getBalance: () => Promise<WalletBalance[]>;
   clearError: () => void;
+  // Multi-wallet & Delegation extensions
+  linkedWallets: LinkedWallet[];
+  delegations: Delegation[];
+  linkWallet: (walletType: 'freighter' | 'albedo' | 'ledger') => Promise<void>;
+  unlinkWallet: (publicKey: string) => void;
+  manageDelegation: (delegation: Omit<Delegation, 'id' | 'createdAt'>) => Promise<void>;
+  recoverSession: () => Promise<void>;
 }
 
 export interface TransactionResult {
