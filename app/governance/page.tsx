@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useStellarWallet } from '@/components/context/StellarWalletProvider';
 import { GovernanceDashboard } from '@/features/governance/components/GovernanceDashboard';
+import { PolicyManager } from '@/features/governance/components/PolicyManager';
 import {
   GovernanceConfig,
   Proposal,
@@ -184,6 +185,10 @@ export default function GovernancePage() {
         onVote={handleVote}
         onExecute={handleExecute}
       />
+
+      <div className="pt-20 border-t border-white/5">
+         <PolicyManager />
+      </div>
     </main>
   );
 }

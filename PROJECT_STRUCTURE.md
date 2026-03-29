@@ -64,6 +64,7 @@ stellaiverse-frontend/
 - ✅ **Cosmic UI Theme**: Dark space aesthetic with glowing effects
 - ✅ **Agent Marketplace**: Browse agents with ratings and user counts
 - ✅ **Personalized Recommendations**: AI-driven agent suggestions with explanations and feedback
+- ✅ **Dynamic Quota & Rate Limits**: Real-time visualization and admin policy management
 - ✅ **Creation Wizard**: Multi-step form for creating new agents
 - ✅ **Portfolio Dashboard**: Track agent performance and statistics
 - ✅ **Learning Center**: Tutorials for building smarter agents

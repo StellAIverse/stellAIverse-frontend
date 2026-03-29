@@ -1,5 +1,7 @@
 'use client';
 
+import { QuotaVisualization } from '@/features/agent-telemetry/components/QuotaVisualization';
+
 export default function Portfolio() {
   const agents = [
     {
@@ -26,7 +28,11 @@ export default function Portfolio() {
         <h1 className="text-5xl font-bold mb-2 glow-text">Your Portfolio</h1>
         <p className="text-gray-300 text-lg mb-12">Manage and monitor your deployed agents</p>
 
+        {/* Real-time Quota and Rate Limit Visualization */}
+        <QuotaVisualization userId="user-123" />
+
         <div className="grid gap-6">
+          <h2 className="text-2xl font-bold mb-4 text-white">Deployed Agents</h2>
           {agents.map((agent) => (
             <div
               key={agent.id}
