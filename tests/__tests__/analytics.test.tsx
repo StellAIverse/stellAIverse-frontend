@@ -47,6 +47,18 @@ describe("Analytics Dashboard", () => {
 
   const mockFetch = jest.fn();
   global.fetch = mockFetch;
+  if (!URL.createObjectURL) {
+    // @ts-expect-error - jsdom may not implement this
+    URL.createObjectURL = () => "blob:mock";
+  }
+  if (!URL.revokeObjectURL) {
+    // @ts-expect-error - jsdom may not implement this
+    URL.revokeObjectURL = () => {};
+  }
+
+  const anchorClickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  const createObjectUrlSpy = jest.spyOn(URL, "createObjectURL").mockReturnValue("blob:mock");
+  const revokeObjectUrlSpy = jest.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
 
   beforeEach(() => {
     mockFetch.mockResolvedValue({
@@ -73,6 +85,12 @@ describe("Analytics Dashboard", () => {
         ],
       }),
     });
+  });
+
+  afterAll(() => {
+    anchorClickSpy.mockRestore();
+    createObjectUrlSpy.mockRestore();
+    revokeObjectUrlSpy.mockRestore();
   });
 
   afterEach(() => {

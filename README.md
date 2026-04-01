@@ -12,6 +12,7 @@ The platform combines a powerful **agent creation wizard** (describe behavior �
 - 🌌 **Galaxy Marketplace**: Browse and discover agents visualized as stars and planets
 - 💬 **Agent Chat Interface**: Interact with your AI agents in real-time
 - 📊 **Agent Portfolio**: Track your owned agents and view detailed performance statistics
+- 📈 **System & Business Dashboard**: Prometheus/OpenTelemetry-compatible metrics with filtering and CSV export (PII-safe)
 - 🎓 **Educational Mode**: Learn best practices and tutorials for building smarter agents
 - ✨ **Cosmic UI Theme**: Dark space aesthetic with glowing nebulae and animated constellations
 
@@ -99,6 +100,7 @@ stellAIverse-frontend/
 ## Helpful Links
 
 - **[Documentation](./docs)** - Detailed guides and API documentation
+- **[Metrics dashboard](./docs/metrics-dashboard.md)** - Prometheus/OpenTelemetry integration and PII policy
 - **[Contributing Guidelines](./CONTRIBUTING.md)** - How to contribute to the project
 - **[Issues](https://github.com/StellAIverse/stellAIverse-frontend/issues)** - Report bugs or request features
 - **[Discussions](https://github.com/StellAIverse/stellAIverse-frontend/discussions)** - Community discussions
