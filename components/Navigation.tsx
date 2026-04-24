@@ -25,6 +25,8 @@ export const Navigation: React.FC = () => {
     { href: "/portfolio", label: "Portfolio" },
     { href: "/staking", label: "Staking" },
     { href: "/learn", label: "Learn" },
+    { href: "/bug-report", label: "Report Bug" },
+    { href: "/bug-reports", label: "Bug Reports" },
     { href: "submissions", label: "Submission Dashboard" },
   ];
 
@@ -65,7 +67,9 @@ export const Navigation: React.FC = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={
+              isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+            }
             className="md:hidden p-2"
           >
             Menu
