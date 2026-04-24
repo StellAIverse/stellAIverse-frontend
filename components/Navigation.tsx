@@ -21,6 +21,7 @@ export const Navigation: React.FC = () => {
     { href: "/security", label: "Security" },
     { href: "/provenance", label: "Provenance" },
     { href: "/portfolio", label: "Portfolio" },
+    { href: "/staking", label: "Staking" },
     { href: "/learn", label: "Learn" },
     { href: "submissions", label: "Submission Dashboard" },
   ];
