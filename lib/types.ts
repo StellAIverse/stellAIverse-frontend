@@ -135,3 +135,34 @@ export interface StellarAsset {
   issuer: string;
   name?: string;
 }
+
+// Trading Bonus Types
+export enum BonusType {
+  REFERRAL = 'Referral',
+  TRADING_VOLUME = 'Trading Volume',
+  STAKING = 'Staking',
+  LOYALTY = 'Loyalty',
+  QUEST = 'Quest',
+}
+
+export interface TradingBonus {
+  id: string;
+  type: BonusType;
+  amount: string; // XLM or other asset amount
+  asset: string;
+  timestamp: string;
+  status: 'earned' | 'pending' | 'projected';
+  description: string;
+}
+
+export interface BonusBreakdown {
+  type: BonusType;
+  totalAmount: string;
+  count: number;
+  color: string;
+}
+
+export interface BonusHistory {
+  date: string;
+  amount: number;
+}

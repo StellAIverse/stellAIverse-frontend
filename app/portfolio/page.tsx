@@ -1,6 +1,7 @@
 'use client';
 
 import { QuotaVisualization } from '@/features/agent-telemetry/components/QuotaVisualization';
+import { BonusDashboard } from '@/features/trading-bonuses/components/BonusDashboard';
 
 export default function Portfolio() {
   const agents = [
@@ -31,7 +32,10 @@ export default function Portfolio() {
         {/* Real-time Quota and Rate Limit Visualization */}
         <QuotaVisualization userId="user-123" />
 
-        <div className="grid gap-6">
+        {/* Trading Bonuses Feature */}
+        <BonusDashboard />
+
+        <div className="grid gap-6 mt-16">
           <h2 className="text-2xl font-bold mb-4 text-white">Deployed Agents</h2>
           {agents.map((agent) => (
             <div
