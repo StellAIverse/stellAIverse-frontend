@@ -15,6 +15,10 @@ The platform combines a powerful **agent creation wizard** (describe behavior �
 - 📈 **System & Business Dashboard**: Prometheus/OpenTelemetry-compatible metrics with filtering and CSV export (PII-safe)
 - 🎓 **Educational Mode**: Learn best practices and tutorials for building smarter agents
 - ✨ **Cosmic UI Theme**: Dark space aesthetic with glowing nebulae and animated constellations
+- 📱 **Progressive Web App**: Installable app with offline support and aggressive caching
+- ⚡ **Lightning Fast**: Advanced caching strategies for instant load times
+- 🔄 **Background Sync**: Sync data when connection is restored
+- 🔔 **Push Notifications**: Real-time updates and engagement features
 
 ## Requirements
 
@@ -77,7 +81,22 @@ npm run build
 npm run test
 ```
 
-### 7. Network Configuration
+### 7. PWA Setup (Optional)
+
+For Progressive Web App features with aggressive caching:
+
+```bash
+# Quick PWA setup
+chmod +x scripts/setup-pwa.sh
+./scripts/setup-pwa.sh
+
+# Or manual setup
+npm install next-pwa workbox-webpack-plugin
+node scripts/generate-icons.js
+npm run build
+```
+
+### 8. Network Configuration
 
 If running with a local backend, ensure:
 - Frontend runs on `http://localhost:3000`
@@ -100,6 +119,7 @@ stellAIverse-frontend/
 ## Helpful Links
 
 - **[Documentation](./docs)** - Detailed guides and API documentation
+- **[PWA Implementation Guide](./docs/PWA_IMPLEMENTATION.md)** - Progressive Web App features and caching strategies
 - **[Metrics dashboard](./docs/metrics-dashboard.md)** - Prometheus/OpenTelemetry integration and PII policy
 - **[Contributing Guidelines](./CONTRIBUTING.md)** - How to contribute to the project
 - **[Issues](https://github.com/StellAIverse/stellAIverse-frontend/issues)** - Report bugs or request features
