@@ -3,7 +3,7 @@ import { UserConfig } from 'next-i18next';
 const i18n: UserConfig = {
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'es', 'zh', 'ja', 'ko', 'de', 'fr', 'pt', 'ru', 'ar'],
+    locales: ['en', 'es', 'zh', 'ja', 'fr', 'de'],
   },
   fallbackLng: 'en',
   interpolation: {
