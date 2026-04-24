@@ -132,7 +132,7 @@ export default function ProvenanceExplorer() {
                     {record.details.input && (
                       <div>
                         <span className="text-[10px] text-gray-500 uppercase block mb-1">Input</span>
-                        <p className="italic">"{record.details.input}"</p>
+                        <p className="italic">&quot;{record.details.input}&quot;</p>
                       </div>
                     )}
                     {record.details.payload && (

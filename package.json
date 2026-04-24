@@ -7,13 +7,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "test": "jest --config jest.config.cjs",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "telemetry:ws": "node scripts/telemetry-ws-server.mjs"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.0.0",
+    "@mui/material": "^9.0.0",
     "@stellar/freighter-api": "^6.0.0",
     "@stellar/stellar-sdk": "^14.0.0",
     "@tanstack/react-query": "^4.0.0",

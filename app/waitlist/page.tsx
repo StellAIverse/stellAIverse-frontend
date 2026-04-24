@@ -84,9 +84,9 @@ export default function PremiumWaitlist() {
         <div className="max-w-2xl w-full text-center">
           <div className="mb-8">
             <div className="text-6xl mb-4">✨</div>
-            <h1 className="text-4xl font-bold mb-4 glow-text">{t('waitlist.success.title')}</h1>
+            <h1 className="text-4xl font-bold mb-4 glow-text">You&apos;re on the list!</h1>
             <p className="text-xl text-cosmic-cyan mb-8">
-              {t('waitlist.success.message')}
+              Thank you for joining the premium waitlist. We&apos;ll be in touch soon with exclusive updates.
             </p>
           </div>
           <div className="space-y-4">

@@ -37,7 +37,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ agent })
               <span className="text-sm">⭐</span> Personal Insight
             </h4>
             <p className="text-xs text-gray-300 leading-relaxed italic">
-              "{agent.explanation}"
+              &quot;{agent.explanation}&quot;
             </p>
           </div>
 

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { StellarWalletProvider } from '@/components/context/StellarWalletProvider';
+import { ThemeModeProvider } from '@/components/providers/ThemeModeProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import Navigation from '@/components/Navigation';
 import PWAInstall from '@/components/PWAInstall';
@@ -36,35 +37,64 @@ export const metadata: Metadata = {
 };
 
 function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body className="bg-cosmic-dark text-white overflow-x-hidden">
-        <QueryProvider>
-          <StellarWalletProvider>
-            <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
-              {/* Animated background stars */}
-              <div className="fixed inset-0 pointer-events-none">
-                {Array.from({ length: 100 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-                    style={{
-                      top: `${Math.random() * 100}%`,
-                      left: `${Math.random() * 100}%`,
-                      animationDelay: `${Math.random() * 3}s`,
-                    }}
-                  />
-                ))}
-              </div>
+  const themeBootstrapScript = `
+    (() => {
+      try {
+        const storageKey = 'stellaiverse-theme-mode';
+        const savedTheme = localStorage.getItem(storageKey);
+        const theme =
+          savedTheme === 'light' || savedTheme === 'dark'
+            ? savedTheme
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      } catch (error) {
+        document.documentElement.dataset.theme = 'dark';
+        document.documentElement.style.colorScheme = 'dark';
+      }
+    })();
+  `;
 
-              <div className="relative z-10">
-                <Navigation />
-                {children}
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-[rgb(var(--page-background))] text-[rgb(var(--page-text))] overflow-x-hidden">
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
+        <ThemeModeProvider>
+          <QueryProvider>
+            <StellarWalletProvider>
+              <div
+                className="min-h-screen"
+                style={{
+                  background:
+                    'linear-gradient(135deg, rgb(var(--page-background)) 0%, rgb(var(--page-background-alt)) 52%, rgb(var(--page-background)) 100%)',
+                }}
+              >
+                {/* Animated background stars */}
+                <div className="fixed inset-0 pointer-events-none">
+                  {Array.from({ length: 100 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-1 h-1 rounded-full animate-twinkle"
+                      style={{
+                        top: `${Math.random() * 100}%`,
+                        left: `${Math.random() * 100}%`,
+                        animationDelay: `${Math.random() * 3}s`,
+                        backgroundColor: 'rgb(var(--color-cosmic-purple) / 0.45)',
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div className="relative z-10">
+                  <Navigation />
+                  {children}
+                </div>
               </div>
-            </div>
-          </StellarWalletProvider>
-        </QueryProvider>
-        <PWAInstall />
+            </StellarWalletProvider>
+          </QueryProvider>
+        </ThemeModeProvider>
       </body>
     </html>
   );

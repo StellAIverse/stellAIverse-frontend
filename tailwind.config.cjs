@@ -8,12 +8,12 @@ module.exports = {
     extend: {
       colors: {
         cosmic: {
-          dark: '#0a0e27',
-          darker: '#05070f',
-          purple: '#8b5cf6',
-          blue: '#3b82f6',
-          cyan: '#06b6d4',
-          nebula: '#d946ef',
+          dark: 'rgb(var(--color-cosmic-dark) / <alpha-value>)',
+          darker: 'rgb(var(--color-cosmic-darker) / <alpha-value>)',
+          purple: 'rgb(var(--color-cosmic-purple) / <alpha-value>)',
+          blue: 'rgb(var(--color-cosmic-blue) / <alpha-value>)',
+          cyan: 'rgb(var(--color-cosmic-cyan) / <alpha-value>)',
+          nebula: 'rgb(var(--color-cosmic-nebula) / <alpha-value>)',
         },
       },
       animation: {
