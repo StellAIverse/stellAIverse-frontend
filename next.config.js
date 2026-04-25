@@ -2,24 +2,34 @@
 const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
-  // PWA Configuration
+  // Enhanced PWA Configuration with aggressive caching
   pwa: {
     dest: 'public',
     disable: process.env.NODE_ENV === 'development',
     register: true,
     skipWaiting: true,
+    scope: '/',
+    sw: 'sw.js',
+    
+    // Enhanced runtime caching with better strategies
     runtimeCaching: [
       {
         urlPattern: /^https?.*\/api\/.*$/,
         handler: 'NetworkFirst',
         options: {
-          cacheName: 'api-cache',
+          cacheName: 'stellaiverse-api',
           expiration: {
             maxEntries: 100,
             maxAgeSeconds: 60 * 60 * 24, // 24 hours
           },
+          cacheableResponse: {
+            statuses: [0, 200]
+          },
+          networkTimeoutSeconds: 10,
           cacheKeyWillBeUsed: async ({ request }) => {
-            return `${request.url}?version=${Date.now()}`;
+            // Add build version to cache key for better cache busting
+            const buildId = process.env.BUILD_ID || Date.now().toString();
+            return `${request.url}?v=${buildId}`;
           },
         },
       },
@@ -27,27 +37,35 @@ const nextConfig = {
         urlPattern: /\.(?:js|css|html|json)$/,
         handler: 'StaleWhileRevalidate',
         options: {
-          cacheName: 'static-resources',
+          cacheName: 'stellaiverse-static',
           expiration: {
             maxEntries: 200,
             maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
           },
+          cacheableResponse: {
+            statuses: [0, 200]
+          },
           cacheKeyWillBeUsed: async ({ request }) => {
-            return `${request.url}?version=${Date.now()}`;
+            const buildId = process.env.BUILD_ID || Date.now().toString();
+            return `${request.url}?v=${buildId}`;
           },
         },
       },
       {
-        urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+        urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico|avif)$/,
         handler: 'CacheFirst',
         options: {
-          cacheName: 'images-cache',
+          cacheName: 'stellaiverse-images',
           expiration: {
             maxEntries: 500,
             maxAgeSeconds: 60 * 60 * 24 * 90, // 90 days
           },
+          cacheableResponse: {
+            statuses: [0, 200]
+          },
           cacheKeyWillBeUsed: async ({ request }) => {
-            return `${request.url}?version=${Date.now()}`;
+            const buildId = process.env.BUILD_ID || Date.now().toString();
+            return `${request.url}?v=${buildId}`;
           },
         },
       },
@@ -55,13 +73,17 @@ const nextConfig = {
         urlPattern: /\.(?:woff|woff2|ttf|eot)$/,
         handler: 'CacheFirst',
         options: {
-          cacheName: 'fonts-cache',
+          cacheName: 'stellaiverse-fonts',
           expiration: {
             maxEntries: 50,
             maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
           },
+          cacheableResponse: {
+            statuses: [0, 200]
+          },
           cacheKeyWillBeUsed: async ({ request }) => {
-            return `${request.url}?version=${Date.now()}`;
+            const buildId = process.env.BUILD_ID || Date.now().toString();
+            return `${request.url}?v=${buildId}`;
           },
         },
       },
@@ -69,10 +91,13 @@ const nextConfig = {
         urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/,
         handler: 'StaleWhileRevalidate',
         options: {
-          cacheName: 'google-fonts-stylesheets',
+          cacheName: 'stellaiverse-google-fonts-stylesheets',
           expiration: {
             maxEntries: 10,
             maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+          },
+          cacheableResponse: {
+            statuses: [0, 200]
           },
         },
       },
@@ -80,18 +105,39 @@ const nextConfig = {
         urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/,
         handler: 'CacheFirst',
         options: {
-          cacheName: 'google-fonts-webfonts',
+          cacheName: 'stellaiverse-google-fonts-webfonts',
           expiration: {
             maxEntries: 50,
             maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+          },
+          cacheableResponse: {
+            statuses: [0, 200]
           },
         },
       },
     ],
   },
-  // Asset versioning for cache busting
+  // Asset versioning for cache busting with build hash
   generateBuildId: async () => {
-    return `build-${Date.now()}`;
+    // Create a more stable build ID based on content hash
+    const crypto = require('crypto');
+    const fs = require('fs');
+    const path = require('path');
+    
+    try {
+      // Get package.json content for base hash
+      const packageJsonPath = path.join(__dirname, 'package.json');
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+      
+      // Create hash from package version and timestamp
+      const hashInput = `${packageJson.version}-${Date.now()}`;
+      const hash = crypto.createHash('sha256').update(hashInput).digest('hex').substring(0, 8);
+      
+      return `build-${hash}`;
+    } catch (error) {
+      console.warn('Failed to generate build hash, using timestamp fallback');
+      return `build-${Date.now()}`;
+    }
   },
   // Enable compression
   compress: true,

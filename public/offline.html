@@ -156,38 +156,129 @@
             }
         }
 
-        // Check connection status
+        // Check connection status with enhanced features
         function checkConnection() {
             const status = document.getElementById('status');
+            const retryBtn = document.querySelector('.retry-btn');
             
             if (navigator.onLine) {
                 status.textContent = 'Connection restored! Redirecting...';
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
+                retryBtn.textContent = 'Loading...';
+                retryBtn.disabled = true;
+                
+                // Try to fetch a small resource to confirm connection
+                fetch('/', { method: 'HEAD' })
+                    .then(() => {
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1000);
+                    })
+                    .catch(() => {
+                        status.textContent = 'Connection detected but server unavailable. Please try again.';
+                        retryBtn.textContent = 'Try Again';
+                        retryBtn.disabled = false;
+                    });
             } else {
                 status.textContent = 'Still offline. Please check your connection.';
+                retryBtn.textContent = 'Try Again';
+                retryBtn.disabled = false;
+            }
+        }
+
+        // Enhanced retry functionality
+        function retryConnection() {
+            const retryBtn = document.querySelector('.retry-btn');
+            const status = document.getElementById('status');
+            
+            retryBtn.textContent = 'Checking...';
+            retryBtn.disabled = true;
+            status.textContent = 'Testing connection...';
+            
+            // Test connection with a small request
+            fetch('/', { method: 'HEAD', cache: 'no-store' })
+                .then(response => {
+                    if (response.ok) {
+                        status.textContent = 'Connection restored! Redirecting...';
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1000);
+                    } else {
+                        throw new Error('Server error');
+                    }
+                })
+                .catch(error => {
+                    status.textContent = 'Connection failed. Please check your internet connection.';
+                    retryBtn.textContent = 'Try Again';
+                    retryBtn.disabled = false;
+                });
+        }
+
+        // Get cache information
+        async function getCacheInfo() {
+            if ('caches' in window) {
+                try {
+                    const cacheNames = await caches.keys();
+                    const stellAIverseCaches = cacheNames.filter(name => name.startsWith('stellaiverse-'));
+                    
+                    console.log(`Found ${stellAIverseCaches.length} caches`);
+                    stellAIverseCaches.forEach(cacheName => {
+                        caches.open(cacheName).then(cache => {
+                            cache.keys().then(keys => {
+                                console.log(`${cacheName}: ${keys.length} entries`);
+                            });
+                        });
+                    });
+                } catch (error) {
+                    console.error('Error getting cache info:', error);
+                }
             }
         }
 
         // Listen for connection changes
         window.addEventListener('online', () => {
-            document.getElementById('status').textContent = 'Connection restored! Redirecting...';
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
+            console.log('Connection restored');
+            checkConnection();
         });
 
         window.addEventListener('offline', () => {
+            console.log('Connection lost');
             document.getElementById('status').textContent = 'Connection lost.';
+            const retryBtn = document.querySelector('.retry-btn');
+            retryBtn.textContent = 'Try Again';
+            retryBtn.disabled = false;
+        });
+
+        // Listen for service worker messages
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'SW_UPDATED') {
+                    console.log('Service worker updated');
+                    document.getElementById('status').textContent = 'App updated. Please refresh.';
+                }
+            });
+        }
+
+        // Enhanced retry button
+        document.querySelector('.retry-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            retryConnection();
         });
 
         // Initialize
         generateStars();
+        getCacheInfo();
         checkConnection();
 
         // Check connection every 5 seconds
         setInterval(checkConnection, 5000);
+
+        // Add keyboard shortcut for retry (Ctrl/Cmd + R)
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                retryConnection();
+            }
+        });
     </script>
 </body>
 </html>
