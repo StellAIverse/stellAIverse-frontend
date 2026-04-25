@@ -2,6 +2,7 @@
 
 import { QuotaVisualization } from '@/features/agent-telemetry/components/QuotaVisualization';
 import { BonusDashboard } from '@/features/trading-bonuses/components/BonusDashboard';
+import { WaitlistStatus } from '@/components/WaitlistStatus';
 
 export default function Portfolio() {
   const agents = [
@@ -29,11 +30,16 @@ export default function Portfolio() {
         <h1 className="text-5xl font-bold mb-2 glow-text">Your Portfolio</h1>
         <p className="text-gray-300 text-lg mb-12">Manage and monitor your deployed agents</p>
 
-        {/* Real-time Quota and Rate Limit Visualization */}
-        <QuotaVisualization userId="user-123" />
+        <div className="flex flex-col gap-8 mb-12">
+          {/* Waitlist Status Section */}
+          <WaitlistStatus />
+          
+          {/* Real-time Quota and Rate Limit Visualization */}
+          <QuotaVisualization userId="user-123" />
 
-        {/* Trading Bonuses Feature */}
-        <BonusDashboard />
+          {/* Trading Bonuses Feature */}
+          <BonusDashboard />
+        </div>
 
         <div className="grid gap-6 mt-16">
           <h2 className="text-2xl font-bold mb-4 text-white">Deployed Agents</h2>
