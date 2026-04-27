@@ -238,7 +238,7 @@ const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = React.memo(({ 
       )}
 
       <div style={{ marginTop: '20px', fontSize: '12px', color: '#6b7280' }}>
-        <p>Target: >60 FPS, <16ms render time for smooth performance</p>
+        <p>Target: &gt;60 FPS, &lt;16ms render time for smooth performance</p>
         <p>Tests include data points from 100 to 10,000 with debouncing and virtualization</p>
       </div>
     </div>
