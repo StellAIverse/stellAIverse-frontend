@@ -51,28 +51,28 @@ interface ChartDataPoint {
 }
 
 // Memoized formatters to prevent unnecessary recalculations
-const formatTimestamp = React.memo((timestamp: number): string => {
+const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-});
+};
 
-const formatPrice = React.memo((price: number): string => {
+const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 6,
   }).format(price);
-});
+};
 
-const formatVolume = React.memo((volume: number): string => {
+const formatVolume = (volume: number): string => {
   if (volume >= 1000000) {
     return `${(volume / 1000000).toFixed(2)}M`;
   } else if (volume >= 1000) {
     return `${(volume / 1000).toFixed(2)}K`;
   }
   return volume.toFixed(0);
-});
+};
 
 // Memoized color palette
 const chartColors = {
@@ -87,7 +87,7 @@ const chartColors = {
 };
 
 // Optimized data transformation with memoization
-const transformChartData = useCallback((data: TradingDataPoint[], maxPoints?: number): ChartDataPoint[] => {
+const transformChartData = (data: TradingDataPoint[], maxPoints?: number): ChartDataPoint[] => {
   if (!data || data.length === 0) return [];
 
   let processedData = data;
@@ -107,7 +107,7 @@ const transformChartData = useCallback((data: TradingDataPoint[], maxPoints?: nu
     open: point.open,
     close: point.close,
   }));
-}, []);
+};
 
 // Custom tooltip component with memoization
 const CustomTooltip = React.memo(({ active, payload, label }: any) => {

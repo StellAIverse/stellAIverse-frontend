@@ -14,31 +14,35 @@ import {
 import type { MetricsSeries } from '@/lib/metrics/types';
 import { useDebounce } from 'use-debounce';
 
-const formatTs = React.memo((tsSeconds: number) => {
+const formatTs = (tsSeconds: number) => {
   const d = new Date(tsSeconds * 1000);
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-});
+};
 
-const colorForIndex = React.memo((i: number) => {
+const colorForIndex = (i: number) => {
   const palette = ['#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6'];
   return palette[i % palette.length];
-});
+};
 
-type ChartPoint = { ts: number; label: string } & Record<string, number | null>;
+type ChartPoint = {
+  ts: number;
+  label: string;
+  [key: string]: number | string | null;
+};
 
-const buildChartData = useCallback((series: MetricsSeries[]): { data: ChartPoint[]; keys: string[] } => {
+const buildChartData = (series: MetricsSeries[]): { data: ChartPoint[]; keys: string[] } => {
   const keys = series.map((s) => s.seriesName);
   const byTs = new Map<number, ChartPoint>();
   for (const s of series) {
     for (const p of s.points) {
-      const existing = byTs.get(p.ts) || { ts: p.ts, label: formatTs(p.ts) };
+      const existing: ChartPoint = byTs.get(p.ts) || { ts: p.ts, label: formatTs(p.ts) };
       (existing as Record<string, number | null>)[s.seriesName] = p.value;
       byTs.set(p.ts, existing);
     }
   }
   const data = Array.from(byTs.values()).sort((a, b) => a.ts - b.ts);
   return { data, keys };
-}, []);
+};
 
 interface OptimizedMetricLineChartProps {
   series: MetricsSeries[];

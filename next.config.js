@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
+  productionBrowserSourceMaps: true,
   // Enhanced PWA Configuration with aggressive caching
   pwa: {
     dest: 'public',
@@ -120,13 +121,13 @@ const nextConfig = {
   // Asset versioning for cache busting with build hash
   generateBuildId: async () => {
     // Create a more stable build ID based on content hash
-    const crypto = require('crypto');
-    const fs = require('fs');
-    const path = require('path');
+    const crypto = await import('crypto');
+    const fs = await import('fs');
+    const path = await import('path');
     
     try {
       // Get package.json content for base hash
-      const packageJsonPath = path.join(__dirname, 'package.json');
+      const packageJsonPath = path.join(process.cwd(), 'package.json');
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
       
       // Create hash from package version and timestamp
@@ -149,7 +150,7 @@ const nextConfig = {
   // Enable experimental features for better performance
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['@stellar/stellar-sdk', '@tanstack/react-query'],
+    optimizePackageImports: ['@stellar/stellar-sdk', '@tanstack/react-query', '@mui/material', '@mui/icons-material', 'recharts', 'nft.storage', 'ipfs-http-client'],
   },
 };
 

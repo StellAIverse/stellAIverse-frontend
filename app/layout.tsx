@@ -169,10 +169,11 @@ function RootLayout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className="bg-cosmic-dark text-white overflow-x-hidden">
-        <QueryProvider>
-          <StellarWalletProvider>
-            <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
-              {/* Animated background stars */}
+        <ThemeModeProvider>
+          <QueryProvider>
+            <StellarWalletProvider>
+              <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
+                {/* Animated background stars */}
               <div className="fixed inset-0 pointer-events-none">
                 {Array.from({ length: 100 }).map((_, i) => (
                   <div
