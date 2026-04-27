@@ -665,15 +665,38 @@ self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification click received:', event.notification);
   
   const notification = event.notification;
-  const url = notification.data?.url || '/';
+  const data = notification.data || {};
+  let url = data.url || '/';
   
   notification.close();
   
   // Handle notification actions
   if (event.action) {
     console.log('[SW] Notification action clicked:', event.action);
-    // Handle specific actions here
-    return;
+    
+    switch (event.action) {
+      case 'view-transaction':
+        if (data.transactionHash) {
+          url = `/portfolio?transaction=${data.transactionHash}`;
+        }
+        break;
+      case 'view-portfolio':
+        url = '/portfolio';
+        break;
+      case 'retry-transaction':
+        // Send message to client to retry transaction
+        sendMessageToClient({
+          type: 'RETRY_TRANSACTION',
+          data: {
+            transactionHash: data.transactionHash,
+            agentName: data.agentName,
+            error: data.error
+          }
+        });
+        return;
+      default:
+        console.log('[SW] Unknown action:', event.action);
+    }
   }
   
   // Focus existing window or open new one
@@ -684,7 +707,7 @@ self.addEventListener('notificationclick', (event) => {
     }).then((clientList) => {
       // Focus existing window if available
       for (const client of clientList) {
-        if (client.url === url && 'focus' in client) {
+        if (client.url.includes(url.split('?')[0]) && 'focus' in client) {
           return client.focus();
         }
       }
@@ -696,6 +719,18 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// Helper function to send messages to clients
+function sendMessageToClient(message) {
+  return clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true
+  }).then(clientList => {
+    clientList.forEach(client => {
+      client.postMessage(message);
+    });
+  });
+}
 
 // Message handling for client communication
 self.addEventListener('message', (event) => {
