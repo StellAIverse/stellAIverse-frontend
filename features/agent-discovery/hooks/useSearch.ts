@@ -1,29 +1,43 @@
-import { useState, useEffect } from "react";
-import { searchAgents } from "../services/searchService";
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/redux/hooks";
+import {
+  fetchSearchResults,
+  setFilters as setFiltersAction,
+  setQuery as setQueryAction,
+} from "@/store/redux/searchSlice";
 
 export const useSearch = (initialQuery = "", initialFilters = {}) => {
-  const [query, setQuery] = useState(initialQuery);
-  const [filters, setFilters] = useState(initialFilters);
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Ensure error is a string or null
+  const dispatch = useAppDispatch();
+  const { query, filters, results, loading, error } = useAppSelector(
+    (state) => state.search
+  );
+
+  const setQuery = (nextQuery: string) => {
+    dispatch(setQueryAction(nextQuery));
+  };
+
+  const setFilters = (nextFilters: Record<string, string | number | boolean>) => {
+    dispatch(setFiltersAction(nextFilters));
+  };
 
   useEffect(() => {
-    const fetchResults = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await searchAgents(query, filters);
-        setResults(data);
-      } catch (err) {
-        setError((err as Error).message || "An unknown error occurred"); // Cast err to Error and extract message
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (initialQuery) {
+      dispatch(setQueryAction(initialQuery));
+    }
+    if (Object.keys(initialFilters).length > 0) {
+      dispatch(setFiltersAction(initialFilters as Record<string, string | number | boolean>));
+    }
+  }, [dispatch, initialFilters, initialQuery]);
 
-    fetchResults();
-  }, [query, filters]);
+  useEffect(() => {
+    const debouncedSearch = window.setTimeout(() => {
+      void dispatch(fetchSearchResults({ query, filters }));
+    }, 300);
+
+    return () => {
+      window.clearTimeout(debouncedSearch);
+    };
+  }, [dispatch, filters, query]);
 
   return { query, setQuery, filters, setFilters, results, loading, error };
 };

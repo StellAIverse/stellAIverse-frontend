@@ -3,6 +3,7 @@ import './globals.css';
 import { StellarWalletProvider } from '@/components/context/StellarWalletProvider';
 import { ThemeModeProvider } from '@/components/providers/ThemeModeProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
+import ReduxProvider from '@/components/providers/ReduxProvider';
 import Navigation from '@/components/Navigation';
 import PWAInstall from '@/components/PWAInstall';
 
@@ -170,9 +171,10 @@ function RootLayout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="bg-cosmic-dark text-white overflow-x-hidden">
         <ThemeModeProvider>
-          <QueryProvider>
-            <StellarWalletProvider>
-              <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
+          <ReduxProvider>
+            <QueryProvider>
+              <StellarWalletProvider>
+                <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
                 {/* Animated background stars */}
               <div className="fixed inset-0 pointer-events-none">
                 {Array.from({ length: 100 }).map((_, i) => (
@@ -188,13 +190,14 @@ function RootLayout({ children }: { children: React.ReactNode }) {
                 ))}
               </div>
 
-                <div className="relative z-10">
-                  <Navigation />
-                  {children}
+                  <div className="relative z-10">
+                    <Navigation />
+                    {children}
+                  </div>
                 </div>
-              </div>
-            </StellarWalletProvider>
-          </QueryProvider>
+              </StellarWalletProvider>
+            </QueryProvider>
+          </ReduxProvider>
         </ThemeModeProvider>
       </body>
     </html>
