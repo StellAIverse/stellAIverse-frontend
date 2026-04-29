@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import { useTranslation } from 'next-i18next';
+import { useRouter, usePathname } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 interface Language {
   code: string;
@@ -23,16 +23,17 @@ const languages: Language[] = [
 export const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
 
   const handleLanguageChange = (languageCode: string) => {
-    const { pathname, asPath, query } = router;
-    
-    // Change language and navigate to the same page with new locale
-    router.push({ pathname, query }, asPath, { locale: languageCode });
+    i18n.changeLanguage(languageCode);
     setIsOpen(false);
+    // In App Router with client-side i18n, we often don't need to push a new route if we are just switching the client state.
+    // However, if the project uses locale-based paths, we would push to /[locale]/[path].
+    // Since this project seems to use client-side state, we just change the i18n language.
   };
 
   return (
