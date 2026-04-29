@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import { useDebounce } from 'use-debounce';
 import PerformanceMonitor from '@/components/PerformanceMonitor';
+import { calculateIndicators, IndicatorData } from '@/lib/trading/indicators';
 
 export interface TradingDataPoint {
   timestamp: number;
@@ -28,6 +29,17 @@ export interface TradingDataPoint {
   close: number;
 }
 
+export interface IndicatorOptions {
+  sma?: { period: number; enabled: boolean };
+  ema?: { period: number; enabled: boolean };
+  rsi?: { period: number; enabled: boolean };
+  macd?: { fastPeriod: number; slowPeriod: number; signalPeriod: number; enabled: boolean };
+  bollingerBands?: { period: number; standardDeviations: number; enabled: boolean };
+  stochastic?: { kPeriod: number; dPeriod: number; enabled: boolean };
+  williamsR?: { period: number; enabled: boolean };
+  cci?: { period: number; enabled: boolean };
+}
+
 export interface TradingChartProps {
   data: TradingDataPoint[];
   height?: number;
@@ -37,42 +49,37 @@ export interface TradingChartProps {
   debounceMs?: number;
   maxDataPoints?: number;
   enablePerformanceMonitoring?: boolean;
+  indicators?: IndicatorOptions;
   onPerformanceUpdate?: (metrics: { fps: number; renderTime: number; memoryUsage?: number }) => void;
 }
 
-interface ChartDataPoint {
+interface ChartDataPoint extends TradingDataPoint, IndicatorData {
   time: string;
-  price: number;
-  volume: number;
-  high: number;
-  low: number;
-  open: number;
-  close: number;
 }
 
 // Memoized formatters to prevent unnecessary recalculations
-const formatTimestamp = React.memo((timestamp: number): string => {
+const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-});
+};
 
-const formatPrice = React.memo((price: number): string => {
+const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 6,
   }).format(price);
-});
+};
 
-const formatVolume = React.memo((volume: number): string => {
+const formatVolume = (volume: number): string => {
   if (volume >= 1000000) {
     return `${(volume / 1000000).toFixed(2)}M`;
   } else if (volume >= 1000) {
     return `${(volume / 1000).toFixed(2)}K`;
   }
   return volume.toFixed(0);
-});
+};
 
 // Memoized color palette
 const chartColors = {
@@ -87,7 +94,7 @@ const chartColors = {
 };
 
 // Optimized data transformation with memoization
-const transformChartData = useCallback((data: TradingDataPoint[], maxPoints?: number): ChartDataPoint[] => {
+const transformChartData = (data: TradingDataPoint[], maxPoints?: number, indicators?: IndicatorOptions): ChartDataPoint[] => {
   if (!data || data.length === 0) return [];
 
   let processedData = data;
@@ -98,7 +105,10 @@ const transformChartData = useCallback((data: TradingDataPoint[], maxPoints?: nu
     processedData = data.filter((_, index) => index % step === 0);
   }
 
-  return processedData.map(point => ({
+  // Calculate indicators if enabled
+  const dataWithIndicators = indicators ? calculateIndicators(processedData, indicators) : processedData;
+
+  return dataWithIndicators.map(point => ({
     time: formatTimestamp(point.timestamp),
     price: point.price,
     volume: point.volume,
@@ -106,11 +116,19 @@ const transformChartData = useCallback((data: TradingDataPoint[], maxPoints?: nu
     low: point.low,
     open: point.open,
     close: point.close,
+    sma: point.sma,
+    ema: point.ema,
+    rsi: point.rsi,
+    macd: point.macd,
+    bollingerBands: point.bollingerBands,
+    stochastic: point.stochastic,
+    williamsR: point.williamsR,
+    cci: point.cci,
   }));
-}, []);
+};
 
 // Custom tooltip component with memoization
-const CustomTooltip = React.memo(({ active, payload, label }: any) => {
+const CustomTooltip = React.memo(({ active, payload, label, indicators }: any) => {
   if (!active || !payload || !payload.length) return null;
 
   return (
@@ -122,17 +140,68 @@ const CustomTooltip = React.memo(({ active, payload, label }: any) => {
         padding: '12px',
         color: '#fff',
         fontSize: '12px',
+        maxWidth: '250px',
       }}
     >
       <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>{label}</div>
-      {payload.map((entry: any, index: number) => (
-        <div key={index} style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-          <span style={{ color: entry.color }}>{entry.name}:</span>
-          <span style={{ fontWeight: 'bold' }}>
-            {entry.name.includes('Volume') ? formatVolume(entry.value) : formatPrice(entry.value)}
-          </span>
-        </div>
-      ))}
+      {payload.map((entry: any, index: number) => {
+        // Handle nested indicator data
+        let displayValue = entry.value;
+        let displayName = entry.name;
+
+        if (entry.dataKey === 'bollingerBands.upper' && entry.payload.bollingerBands) {
+          displayValue = entry.payload.bollingerBands.upper;
+          displayName = 'BB Upper';
+        } else if (entry.dataKey === 'bollingerBands.middle' && entry.payload.bollingerBands) {
+          displayValue = entry.payload.bollingerBands.middle;
+          displayName = 'BB Middle';
+        } else if (entry.dataKey === 'bollingerBands.lower' && entry.payload.bollingerBands) {
+          displayValue = entry.payload.bollingerBands.lower;
+          displayName = 'BB Lower';
+        } else if (entry.dataKey === 'macd.macd' && entry.payload.macd) {
+          displayValue = entry.payload.macd.macd;
+          displayName = 'MACD';
+        } else if (entry.dataKey === 'macd.signal' && entry.payload.macd) {
+          displayValue = entry.payload.macd.signal;
+          displayName = 'MACD Signal';
+        } else if (entry.dataKey === 'macd.histogram' && entry.payload.macd) {
+          displayValue = entry.payload.macd.histogram;
+          displayName = 'MACD Histogram';
+        } else if (entry.dataKey === 'stochastic.k' && entry.payload.stochastic) {
+          displayValue = entry.payload.stochastic.k;
+          displayName = 'Stochastic %K';
+        } else if (entry.dataKey === 'stochastic.d' && entry.payload.stochastic) {
+          displayValue = entry.payload.stochastic.d;
+          displayName = 'Stochastic %D';
+        } else if (entry.dataKey === 'williamsR') {
+          displayValue = entry.payload.williamsR;
+          displayName = 'Williams %R';
+        } else if (entry.dataKey === 'cci') {
+          displayValue = entry.payload.cci;
+          displayName = 'CCI';
+        }
+
+        // Format values based on type
+        let formattedValue = displayValue;
+        if (typeof displayValue === 'number') {
+          if (displayName.includes('Volume')) {
+            formattedValue = formatVolume(displayValue);
+          } else if (displayName.includes('RSI') || displayName.includes('MACD') || displayName.includes('Stochastic') || displayName.includes('Williams') || displayName.includes('CCI')) {
+            formattedValue = displayValue.toFixed(2);
+          } else if (!displayName.includes('Volume') && !displayName.includes('RSI') && !displayName.includes('MACD') && !displayName.includes('Stochastic') && !displayName.includes('Williams') && !displayName.includes('CCI')) {
+            formattedValue = formatPrice(displayValue);
+          } else {
+            formattedValue = displayValue.toFixed(4);
+          }
+        }
+
+        return (
+          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', marginBottom: '4px' }}>
+            <span style={{ color: entry.color }}>{displayName}:</span>
+            <span style={{ fontWeight: 'bold' }}>{formattedValue}</span>
+          </div>
+        );
+      })}
     </div>
   );
 });
@@ -148,6 +217,7 @@ const OptimizedTradingChart: React.FC<TradingChartProps> = React.memo(({
   debounceMs = 300,
   maxDataPoints = 1000,
   enablePerformanceMonitoring = false,
+  indicators = {},
   onPerformanceUpdate,
 }) => {
   const [debouncedData] = useDebounce(data, debounceMs);
@@ -157,7 +227,7 @@ const OptimizedTradingChart: React.FC<TradingChartProps> = React.memo(({
   // Memoize chart data transformation
   const chartData = useMemo(() => {
     const startTime = performance.now();
-    const result = transformChartData(debouncedData, maxDataPoints);
+    const result = transformChartData(debouncedData, maxDataPoints, indicators);
     const endTime = performance.now();
     
     // Track render performance
@@ -169,7 +239,7 @@ const OptimizedTradingChart: React.FC<TradingChartProps> = React.memo(({
     }
     
     return result;
-  }, [debouncedData, maxDataPoints, transformChartData]);
+  }, [debouncedData, maxDataPoints, indicators, transformChartData]);
 
   // Early return for empty data
   if (!chartData || chartData.length === 0) {
@@ -248,8 +318,181 @@ const OptimizedTradingChart: React.FC<TradingChartProps> = React.memo(({
       );
     }
 
+    // Technical Indicators
+    if (indicators.sma?.enabled) {
+      components.push(
+        <Line
+          key="sma"
+          type="monotone"
+          dataKey="sma"
+          stroke="#fbbf24"
+          strokeWidth={1}
+          strokeDasharray="5 5"
+          dot={false}
+          isAnimationActive={false}
+          name={`SMA(${indicators.sma.period})`}
+        />
+      );
+    }
+
+    if (indicators.ema?.enabled) {
+      components.push(
+        <Line
+          key="ema"
+          type="monotone"
+          dataKey="ema"
+          stroke="#f59e0b"
+          strokeWidth={1}
+          strokeDasharray="10 5"
+          dot={false}
+          isAnimationActive={false}
+          name={`EMA(${indicators.ema.period})`}
+        />
+      );
+    }
+
+    if (indicators.bollingerBands?.enabled) {
+      components.push(
+        <Line
+          key="bb-upper"
+          type="monotone"
+          dataKey="bollingerBands.upper"
+          stroke="#10b981"
+          strokeWidth={1}
+          strokeDasharray="2 2"
+          dot={false}
+          isAnimationActive={false}
+          name="BB Upper"
+        />,
+        <Line
+          key="bb-middle"
+          type="monotone"
+          dataKey="bollingerBands.middle"
+          stroke="#10b981"
+          strokeWidth={1}
+          dot={false}
+          isAnimationActive={false}
+          name="BB Middle"
+        />,
+        <Line
+          key="bb-lower"
+          type="monotone"
+          dataKey="bollingerBands.lower"
+          stroke="#10b981"
+          strokeWidth={1}
+          strokeDasharray="2 2"
+          dot={false}
+          isAnimationActive={false}
+          name="BB Lower"
+        />
+      );
+    }
+
+    if (indicators.rsi?.enabled) {
+      components.push(
+        <Line
+          key="rsi"
+          type="monotone"
+          dataKey="rsi"
+          stroke="#ef4444"
+          strokeWidth={1}
+          dot={false}
+          isAnimationActive={false}
+          name={`RSI(${indicators.rsi.period})`}
+          yAxisId="rsi"
+        />
+      );
+    }
+
+    if (indicators.macd?.enabled) {
+      components.push(
+        <Line
+          key="macd"
+          type="monotone"
+          dataKey="macd.macd"
+          stroke="#8b5cf6"
+          strokeWidth={1}
+          dot={false}
+          isAnimationActive={false}
+          name="MACD"
+          yAxisId="macd"
+        />,
+        <Line
+          key="macd-signal"
+          type="monotone"
+          dataKey="macd.signal"
+          stroke="#f59e0b"
+          strokeWidth={1}
+          dot={false}
+          isAnimationActive={false}
+          name="MACD Signal"
+          yAxisId="macd"
+        />
+      );
+    }
+
+    if (indicators.stochastic?.enabled) {
+      components.push(
+        <Line
+          key="stochastic-k"
+          type="monotone"
+          dataKey="stochastic.k"
+          stroke="#06b6d4"
+          strokeWidth={1}
+          dot={false}
+          isAnimationActive={false}
+          name={`Stochastic %K(${indicators.stochastic.kPeriod})`}
+          yAxisId="stochastic"
+        />,
+        <Line
+          key="stochastic-d"
+          type="monotone"
+          dataKey="stochastic.d"
+          stroke="#0891b2"
+          strokeWidth={1}
+          strokeDasharray="5 5"
+          dot={false}
+          isAnimationActive={false}
+          name={`Stochastic %D(${indicators.stochastic.dPeriod})`}
+          yAxisId="stochastic"
+        />
+      );
+    }
+
+    if (indicators.williamsR?.enabled) {
+      components.push(
+        <Line
+          key="williams-r"
+          type="monotone"
+          dataKey="williamsR"
+          stroke="#dc2626"
+          strokeWidth={1}
+          dot={false}
+          isAnimationActive={false}
+          name={`Williams %R(${indicators.williamsR.period})`}
+          yAxisId="williams"
+        />
+      );
+    }
+
+    if (indicators.cci?.enabled) {
+      components.push(
+        <Line
+          key="cci"
+          type="monotone"
+          dataKey="cci"
+          stroke="#7c3aed"
+          strokeWidth={1}
+          dot={false}
+          isAnimationActive={false}
+          name={`CCI(${indicators.cci.period})`}
+          yAxisId="cci"
+        />
+      );
+    }
+
     return components;
-  }, [showVolume, showCandlestick]);
+  }, [showVolume, showCandlestick, indicators]);
 
   return (
     <div style={{ position: 'relative' }}>
@@ -287,7 +530,51 @@ const OptimizedTradingChart: React.FC<TradingChartProps> = React.memo(({
                   hide
                 />
               )}
-              <Tooltip content={<CustomTooltip />} />
+              {indicators.rsi?.enabled && (
+                <YAxis 
+                  yAxisId="rsi"
+                  orientation="right"
+                  tick={{ fill: chartColors.text, fontSize: 11 }}
+                  domain={[0, 100]}
+                  hide
+                />
+              )}
+              {indicators.macd?.enabled && (
+                <YAxis 
+                  yAxisId="macd"
+                  orientation="right"
+                  tick={{ fill: chartColors.text, fontSize: 11 }}
+                  hide
+                />
+              )}
+              {indicators.stochastic?.enabled && (
+                <YAxis 
+                  yAxisId="stochastic"
+                  orientation="right"
+                  tick={{ fill: chartColors.text, fontSize: 11 }}
+                  domain={[0, 100]}
+                  hide
+                />
+              )}
+              {indicators.williamsR?.enabled && (
+                <YAxis 
+                  yAxisId="williams"
+                  orientation="right"
+                  tick={{ fill: chartColors.text, fontSize: 11 }}
+                  domain={[-100, 0]}
+                  hide
+                />
+              )}
+              {indicators.cci?.enabled && (
+                <YAxis 
+                  yAxisId="cci"
+                  orientation="right"
+                  tick={{ fill: chartColors.text, fontSize: 11 }}
+                  domain={[-200, 200]}
+                  hide
+                />
+              )}
+              <Tooltip content={<CustomTooltip indicators={indicators} />} />
               <Legend />
               {ChartComponents.map((component, index) => 
                 React.cloneElement(component, {
@@ -310,7 +597,7 @@ const OptimizedTradingChart: React.FC<TradingChartProps> = React.memo(({
                 tick={{ fill: chartColors.text, fontSize: 11 }}
                 domain={['dataMin - 0.1', 'dataMax + 0.1']}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip indicators={indicators} />} />
               <Legend />
               {ChartComponents}
             </LineChart>

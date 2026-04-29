@@ -3,6 +3,7 @@ import './globals.css';
 import { StellarWalletProvider } from '@/components/context/StellarWalletProvider';
 import { ThemeModeProvider } from '@/components/providers/ThemeModeProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
+import ReduxProvider from '@/components/providers/ReduxProvider';
 import Navigation from '@/components/Navigation';
 import PWAInstall from '@/components/PWAInstall';
 import ReduxProvider from '@/components/providers/ReduxProvider';
@@ -141,6 +142,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
             <QueryProvider>
               <StellarWalletProvider>
                 <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
+
                   {/* Animated background stars */}
                   <div className="fixed inset-0 pointer-events-none">
                     {Array.from({ length: 100 }).map((_, i) => (
@@ -156,11 +158,28 @@ function RootLayout({ children }: { children: React.ReactNode }) {
                     ))}
                   </div>
 
+                {/* Animated background stars */}
+              <div className="fixed inset-0 pointer-events-none">
+                {Array.from({ length: 100 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
+                    style={{
+                      top: `${Math.random() * 100}%`,
+                      left: `${Math.random() * 100}%`,
+                      animationDelay: `${Math.random() * 3}s`,
+                    }}
+                  />
+                ))}
+              </div>
+
                   <div className="relative z-10">
                     <Navigation />
                     {children}
                   </div>
+
                   <Toaster richColors position="bottom-right" />
+
                 </div>
               </StellarWalletProvider>
             </QueryProvider>
