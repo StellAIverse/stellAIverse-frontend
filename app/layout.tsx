@@ -1,10 +1,13 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { StellarWalletProvider } from '@/components/context/StellarWalletProvider';
 import { ThemeModeProvider } from '@/components/providers/ThemeModeProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import Navigation from '@/components/Navigation';
 import PWAInstall from '@/components/PWAInstall';
+import ReduxProvider from '@/components/providers/ReduxProvider';
+import { Toaster } from 'sonner';
+import '@/lib/i18n';
 
 export const metadata: Metadata = {
   title: 'stellAIverse - AI Agent Marketplace',
@@ -24,7 +27,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/manifest.json',
-  themeColor: '#1a1a2e',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -60,38 +62,20 @@ export const metadata: Metadata = {
   },
 };
 
-function RootLayout({ children }: { children: React.ReactNode }) {
-  const themeBootstrapScript = `
-    (() => {
-      try {
-        const storageKey = 'stellaiverse-theme-mode';
-        const savedTheme = localStorage.getItem(storageKey);
-        const theme =
-          savedTheme === 'light' || savedTheme === 'dark'
-            ? savedTheme
-            : window.matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light';
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.style.colorScheme = theme;
-      } catch (error) {
-        document.documentElement.dataset.theme = 'dark';
-        document.documentElement.style.colorScheme = 'dark';
-      }
-    })();
-  `;
+export const viewport: Viewport = {
+  themeColor: '#1a1a2e',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
 
+function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
         {/* Critical resource hints for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
-        {/* Preload critical resources */}
-        <link rel="preload" href="/_next/static/css/app/globals.css" as="style" />
-        <link rel="preload" href="/icons/icon-192x192.png" as="image" type="image/png" />
-        <link rel="preload" href="/icons/icon-512x512.png" as="image" type="image/png" />
         
         {/* DNS prefetch for external resources */}
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
@@ -106,22 +90,6 @@ function RootLayout({ children }: { children: React.ReactNode }) {
                   navigator.serviceWorker.register('/sw.js', { scope: '/' })
                     .then(function(registration) {
                       console.log('SW registered: ', registration);
-                      
-                      // Check for updates
-                      registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        if (newWorker) {
-                          newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                              // New content is available
-                              if (confirm('A new version of stellAIverse is available. Would you like to update now?')) {
-                                newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                window.location.reload();
-                              }
-                            }
-                          });
-                        }
-                      });
                     })
                     .catch(function(registrationError) {
                       console.log('SW registration failed: ', registrationError);
@@ -133,7 +101,6 @@ function RootLayout({ children }: { children: React.ReactNode }) {
         />
         
         {/* PWA meta tags */}
-        <meta name="theme-color" content="#1a1a2e" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -169,31 +136,35 @@ function RootLayout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className="bg-cosmic-dark text-white overflow-x-hidden">
-        <QueryProvider>
-          <StellarWalletProvider>
-            <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
-              {/* Animated background stars */}
-              <div className="fixed inset-0 pointer-events-none">
-                {Array.from({ length: 100 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-                    style={{
-                      top: `${Math.random() * 100}%`,
-                      left: `${Math.random() * 100}%`,
-                      animationDelay: `${Math.random() * 3}s`,
-                    }}
-                  />
-                ))}
-              </div>
+        <ThemeModeProvider>
+          <ReduxProvider>
+            <QueryProvider>
+              <StellarWalletProvider>
+                <div className="min-h-screen bg-gradient-to-br from-cosmic-dark via-cosmic-darker to-cosmic-dark">
+                  {/* Animated background stars */}
+                  <div className="fixed inset-0 pointer-events-none">
+                    {Array.from({ length: 100 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
+                        style={{
+                          top: `${Math.random() * 100}%`,
+                          left: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 3}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
 
-                <div className="relative z-10">
-                  <Navigation />
-                  {children}
+                  <div className="relative z-10">
+                    <Navigation />
+                    {children}
+                  </div>
+                  <Toaster richColors position="bottom-right" />
                 </div>
-              </div>
-            </StellarWalletProvider>
-          </QueryProvider>
+              </StellarWalletProvider>
+            </QueryProvider>
+          </ReduxProvider>
         </ThemeModeProvider>
       </body>
     </html>
@@ -201,4 +172,3 @@ function RootLayout({ children }: { children: React.ReactNode }) {
 }
 
 export default RootLayout;
-

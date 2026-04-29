@@ -1,320 +1,305 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { ReferralService } from './services/referralService';
-import { AnalyticsService } from './services/analyticsService';
-import { ReferralLink, ReferralStats, ReferralReward } from './types';
+import { useAppDispatch, useAppSelector } from '@/hooks/redux';
+import { 
+  fetchReferralData, 
+  generateLink, 
+  claimReferralReward 
+} from '@/store/slices/referralSlice';
 import ReferralShareModal from './components/ReferralShareModal';
+import { 
+  Box, 
+  Typography, 
+  Grid, 
+  Paper, 
+  Button, 
+  Tabs, 
+  Tab, 
+  Chip, 
+  IconButton, 
+  Tooltip,
+  CircularProgress,
+  alpha,
+  useTheme
+} from '@mui/material';
+import {
+  Share as ShareIcon,
+  ContentCopy as CopyIcon,
+  TrendingUp as StatsIcon,
+  AccountBalanceWallet as WalletIcon,
+  Groups as PeopleIcon,
+  RocketLaunch as RocketIcon,
+  History as HistoryIcon,
+  CheckCircle as SuccessIcon,
+  Block as BlockIcon
+} from '@mui/icons-material';
+import { toast } from 'sonner';
 
 interface ReferralDashboardProps {
   userId: string;
 }
 
 const ReferralDashboard: React.FC<ReferralDashboardProps> = ({ userId }) => {
-  const [stats, setStats] = useState<ReferralStats | null>(null);
-  const [referralLinks, setReferralLinks] = useState<ReferralLink[]>([]);
-  const [rewards, setRewards] = useState<ReferralReward[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const theme = useTheme();
+  const dispatch = useAppDispatch();
+  const { stats, links, rewards, loading, error } = useAppSelector((state) => state.referral);
+  
   const [showShareModal, setShowShareModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'links' | 'rewards'>('overview');
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     if (userId) {
-      loadReferralData();
+      dispatch(fetchReferralData(userId));
     }
-  }, [userId]);
+  }, [userId, dispatch]);
 
-  const loadReferralData = async () => {
-    setIsLoading(true);
-    try {
-      const [statsData, linksData, rewardsData] = await Promise.all([
-        ReferralService.getReferralStats(userId),
-        ReferralService.getUserReferralLinks(userId),
-        ReferralService.getReferralRewards(userId),
-      ]);
-
-      setStats(statsData);
-      setReferralLinks(linksData);
-      setRewards(rewardsData);
-    } catch (error) {
-      console.error('Failed to load referral data:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleCopyLink = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast.success('Referral link copied to clipboard!');
   };
 
-  const handleClaimReward = async (rewardId: string) => {
-    const success = await ReferralService.claimReward(rewardId);
-    if (success) {
-      loadReferralData(); // Refresh data
-    }
+  const handleClaim = (rewardId: string) => {
+    dispatch(claimReferralReward(rewardId))
+      .unwrap()
+      .then(() => toast.success('Reward claimed successfully!'))
+      .catch((err) => toast.error(err));
   };
 
-  const handleDeactivateLink = async (linkId: string) => {
-    try {
-      await ReferralService.updateReferralLink(linkId, { isActive: false });
-      loadReferralData();
-    } catch (error) {
-      console.error('Failed to deactivate link:', error);
-    }
+  const handleGenerate = () => {
+    dispatch(generateLink({ userId }))
+      .unwrap()
+      .then(() => {
+        toast.success('New referral link generated!');
+        setShowShareModal(false);
+      })
+      .catch((err) => toast.error(err));
   };
 
-  if (isLoading) {
+  if (loading && !stats) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <CircularProgress color="primary" />
+      </Box>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Referral Dashboard</h1>
-          <p className="text-gray-600 mt-1">Track your referral performance and rewards</p>
-        </div>
-        <button
+    <Box sx={{ maxWidth: '1200px', mx: 'auto', p: { xs: 2, md: 4 }, spaceY: 4 }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 6, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'start', sm: 'center' }, gap: 3 }}>
+        <Box>
+          <Typography variant="h3" sx={{ fontWeight: 900, mb: 1 }} className="glow-text">
+            Affiliate Center
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+            Expand the constellation and earn XLM rewards for every new explorer.
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<RocketIcon />}
           onClick={() => setShowShareModal(true)}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+          sx={{
+            py: 1.5,
+            px: 4,
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%)',
+            boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)',
+            '&:hover': {
+              boxShadow: '0 6px 20px rgba(139, 92, 246, 0.6)',
+            }
+          }}
         >
-          Share & Earn
-        </button>
-      </div>
+          Create Referral
+        </Button>
+      </Box>
 
-      {/* Stats Overview */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Clicks</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalClicks}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </div>
-            </div>
-          </div>
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 6 }}>
+        {[
+          { label: 'Total Signal Hits', value: stats?.totalClicks || 0, icon: StatsIcon, color: '#3B82F6' },
+          { label: 'Successful Boardings', value: stats?.totalSignups || 0, icon: PeopleIcon, color: '#10B981' },
+          { label: 'Total Earnings', value: `${stats?.totalRewards || 0} XLM`, icon: WalletIcon, color: '#F59E0B' },
+          { label: 'Conversion Orbit', value: `${((stats?.conversionRate || 0) * 100).toFixed(1)}%`, icon: RocketIcon, color: '#8B5CF6' }
+        ].map((stat, i) => (
+          <Grid item xs={12} sm={6} md={3} key={i}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: '20px',
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                backdropFilter: 'blur(10px)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <Box sx={{ position: 'relative', zIndex: 1 }}>
+                <Typography variant="caption" sx={{ color: 'text.disabled', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  {stat.label}
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, mt: 1 }}>
+                  {stat.value}
+                </Typography>
+              </Box>
+              <stat.icon 
+                sx={{ 
+                  position: 'absolute', 
+                  right: -10, 
+                  bottom: -10, 
+                  fontSize: 80, 
+                  color: alpha(stat.color, 0.1),
+                  transform: 'rotate(-15deg)'
+                }} 
+              />
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Signups</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalSignups}</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-              </div>
-            </div>
-          </div>
+      {/* Tabs Section */}
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '24px',
+          backgroundColor: 'rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          overflow: 'hidden'
+        }}
+      >
+        <Tabs 
+          value={activeTab} 
+          onChange={(_, v) => setActiveTab(v)}
+          sx={{
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            px: 2,
+            '& .MuiTab-root': { color: 'text.secondary', fontWeight: 700, py: 3 },
+            '& .Mui-selected': { color: 'primary.main' }
+          }}
+        >
+          <Tab label="Performance" />
+          <Tab label={`Active Links (${links.length})`} />
+          <Tab label={`Reward History (${rewards.length})`} />
+        </Tabs>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Rewards</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalRewards} XLM</p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{(stats.conversionRate * 100).toFixed(1)}%</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'overview'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('links')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'links'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Referral Links ({referralLinks.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('rewards')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'rewards'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Rewards ({rewards.length})
-          </button>
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Overview</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Active Links</span>
-                <span className="font-medium">{stats?.activeLinks || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Pending Rewards</span>
-                <span className="font-medium">{stats?.pendingRewards || 0} XLM</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Average Clicks per Link</span>
-                <span className="font-medium">
-                  {referralLinks.length > 0 
-                    ? (referralLinks.reduce((sum, link) => sum + link.uses, 0) / referralLinks.length).toFixed(1)
-                    : '0'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'links' && (
-        <div className="space-y-4">
-          {referralLinks.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <p className="text-gray-600">No referral links yet</p>
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              >
-                Create Your First Link
-              </button>
-            </div>
-          ) : (
-            referralLinks.map((link) => (
-              <div key={link.id} className="bg-white rounded-lg shadow p-6">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-semibold text-gray-900">{link.code}</h4>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        link.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {link.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1 truncate">{link.url}</p>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <span>{link.uses} uses</span>
-                      <span>•</span>
-                      <span>{link.reward} reward</span>
-                      <span>•</span>
-                      <span>Created {new Date(link.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    {link.isActive && (
-                      <button
-                        onClick={() => handleDeactivateLink(link.id)}
-                        className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                      >
-                        Deactivate
-                      </button>
-                    )}
-                    <button
-                      onClick={() => navigator.clipboard.writeText(link.url)}
-                      className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                    >
-                      Copy
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
+        <Box sx={{ p: 4 }}>
+          {activeTab === 0 && (
+            <Box sx={{ maxWidth: '600px' }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 800 }}>Efficiency Metrics</Typography>
+              <Box sx={{ spaceY: 3 }}>
+                {[
+                  { label: 'Active Transmission Links', value: stats?.activeLinks || 0 },
+                  { label: 'Pending Credits', value: `${stats?.pendingRewards || 0} XLM` },
+                  { label: 'Average Signal Strength', value: links.length > 0 ? (links.reduce((s, l) => s + l.uses, 0) / links.length).toFixed(1) : '0' }
+                ].map((item, i) => (
+                  <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', p: 2, borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.03)', mb: 2 }}>
+                    <Typography sx={{ color: 'text.secondary' }}>{item.label}</Typography>
+                    <Typography sx={{ fontWeight: 800 }}>{item.value}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
           )}
-        </div>
-      )}
 
-      {activeTab === 'rewards' && (
-        <div className="space-y-4">
-          {rewards.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <p className="text-gray-600">No rewards earned yet</p>
-              <p className="text-sm text-gray-500 mt-2">Start sharing your referral links to earn rewards!</p>
-            </div>
-          ) : (
-            rewards.map((reward) => (
-              <div key={reward.id} className="bg-white rounded-lg shadow p-6">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-semibold text-gray-900">{reward.amount} {reward.asset}</h4>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        reward.status === 'claimed' 
-                          ? 'bg-green-100 text-green-800'
-                          : reward.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {reward.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Code: {reward.referralCode} • Earned {new Date(reward.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  {reward.status === 'pending' && (
-                    <button
-                      onClick={() => handleClaimReward(reward.id)}
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                    >
-                      Claim
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
+          {activeTab === 1 && (
+            <Grid container spacing={3}>
+              {links.length === 0 ? (
+                <Grid item xs={12}>
+                  <Box sx={{ textAlign: 'center', py: 8 }}>
+                    <Typography sx={{ color: 'text.secondary', mb: 3 }}>No transmission links found in this sector.</Typography>
+                    <Button variant="outlined" onClick={() => setShowShareModal(true)}>Initiate Link</Button>
+                  </Box>
+                </Grid>
+              ) : (
+                links.map((link) => (
+                  <Grid item xs={12} key={link.id}>
+                    <Paper sx={{ p: 3, borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                        <Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 800 }}>{link.code}</Typography>
+                            <Chip 
+                              label={link.isActive ? 'Active' : 'Inactive'} 
+                              size="small" 
+                              color={link.isActive ? 'success' : 'default'}
+                              variant="outlined"
+                            />
+                          </Box>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'monospace', mb: 2 }}>{link.url}</Typography>
+                          <Box sx={{ display: 'flex', gap: 3 }}>
+                            <Typography variant="caption" sx={{ color: 'text.disabled' }}>{link.uses} Signals</Typography>
+                            <Typography variant="caption" sx={{ color: 'text.disabled' }}>{link.reward} Bounty</Typography>
+                          </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Tooltip title="Copy Link">
+                            <IconButton onClick={() => handleCopyLink(link.url)} sx={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                              <CopyIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Deactivate">
+                            <IconButton sx={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                              <BlockIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                ))
+              )}
+            </Grid>
           )}
-        </div>
-      )}
+
+          {activeTab === 2 && (
+            <Box sx={{ spaceY: 3 }}>
+              {rewards.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 8 }}>
+                  <Typography sx={{ color: 'text.secondary' }}>No bounties claimed in this timeframe.</Typography>
+                </Box>
+              ) : (
+                rewards.map((reward) => (
+                  <Paper key={reward.id} sx={{ p: 3, borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.03)', mb: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{reward.amount} {reward.asset}</Typography>
+                        <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                          Signal Source: {reward.referralCode} • {new Date(reward.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Chip 
+                          label={reward.status} 
+                          size="small" 
+                          sx={{ 
+                            backgroundColor: reward.status === 'claimed' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                            color: reward.status === 'claimed' ? '#10B981' : '#F59E0B',
+                            fontWeight: 700
+                          }} 
+                        />
+                        {reward.status === 'pending' && (
+                          <Button variant="contained" size="small" onClick={() => handleClaim(reward.id)}>Claim</Button>
+                        )}
+                      </Box>
+                    </Box>
+                  </Paper>
+                ))
+              )}
+            </Box>
+          )}
+        </Box>
+      </Paper>
 
       {/* Share Modal */}
       <ReferralShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         userId={userId}
+        onGenerate={handleGenerate}
       />
-    </div>
+    </Box>
   );
 };
 
