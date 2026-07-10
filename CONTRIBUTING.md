@@ -1,4 +1,4 @@
-# Contributing to stellAIverse-frontend
+# Contributing to AIverse-frontend
 
 Thank you for your interest in contributing to stellAIverse! We welcome contributions from the community, including bug reports, feature requests, documentation improvements, and code contributions.
 
@@ -35,11 +35,11 @@ Have an idea for a new feature? Open an issue with:
 ```bash
 # Fork the repository on GitHub
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/stellAIverse-frontend.git
+git clone https://github.com/YOUR_USERNAME/AIverse-frontend.git
 cd stellAIverse-frontend
 
 # Add upstream remote
-git remote add upstream https://github.com/StellAIverse/stellAIverse-frontend.git
+git remote add upstream https://github.com/redux-space/AIverse-frontend.git
 ```
 
 #### Step 2: Create a Feature Branch
