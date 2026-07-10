@@ -122,8 +122,8 @@ stellAIverse-frontend/
 - **[PWA Implementation Guide](./docs/PWA_IMPLEMENTATION.md)** - Progressive Web App features and caching strategies
 - **[Metrics dashboard](./docs/metrics-dashboard.md)** - Prometheus/OpenTelemetry integration and PII policy
 - **[Contributing Guidelines](./CONTRIBUTING.md)** - How to contribute to the project
-- **[Issues](https://github.com/StellAIverse/stellAIverse-frontend/issues)** - Report bugs or request features
-- **[Discussions](https://github.com/StellAIverse/stellAIverse-frontend/discussions)** - Community discussions
+- **[Issues](https://github.com/redux-space/AIverse-frontend/issues)** - Report bugs or request features
+- **[Discussions](https://github.com/redux-space/AIverse-frontend/discussions)** - Community discussions
 - **[Next.js Documentation](https://nextjs.org/docs)** - Learn about Next.js
 - **[Tailwind CSS Documentation](https://tailwindcss.com/docs)** - Style reference
 
